@@ -54,7 +54,7 @@ namespace pot
         {
             ReferenceContext.ShowSourceContext = options.ShowSourceContext;
 
-            var projectDirectory = options.WebConfigPath != null ? Path.GetDirectoryName(options.WebConfigPath) : Directory.GetCurrentDirectory();
+            var projectDirectory = options.WebConfigPath != null ? Path.GetFullPath(options.WebConfigPath) : Directory.GetCurrentDirectory();
             var webConfigFilename = options.WebConfigPath ?? projectDirectory;
 
             if (webConfigFilename.LastIndexOf("Web.config", StringComparison.OrdinalIgnoreCase) == -1)
