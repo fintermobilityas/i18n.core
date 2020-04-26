@@ -119,17 +119,7 @@ namespace i18n.Core.Abstractions.Domain
             }
 
             var filePath = GetPathForLanguage(translation.LanguageInformation.LanguageShortTag);
-            var backupPath = GetPathForLanguage(translation.LanguageInformation.LanguageShortTag) + ".backup";
-            if (File.Exists(filePath)) //we backup one version. more advanced backup solutions could be added here.
-            {
-                if (File.Exists(backupPath))
-                {
-                    File.Delete(backupPath);
-                }
-                File.Move(filePath, backupPath);
-            }
-
-            if (File.Exists(filePath)) //we make sure the old file is removed first
+            if (File.Exists(filePath))
             {
                 File.Delete(filePath);
             }
@@ -241,18 +231,8 @@ namespace i18n.Core.Abstractions.Domain
         bool SaveTemplate(IDictionary<string, TemplateItem> items, string fileName)
         {
             var filePath = Path.Combine(GetAbsoluteLocaleDir(), !string.IsNullOrWhiteSpace(fileName) ? fileName : _localizationOptions.LocaleFilename) + ".pot";
-            var backupPath = filePath + ".backup";
 
-            if (File.Exists(filePath)) //we backup one version. more advanced backup solutions could be added here.
-            {
-                if (File.Exists(backupPath))
-                {
-                    File.Delete(backupPath);
-                }
-                File.Move(filePath, backupPath);
-            }
-
-            if (File.Exists(filePath)) //we make sure the old file is removed first
+            if (File.Exists(filePath))
             {
                 File.Delete(filePath);
             }
@@ -268,69 +248,56 @@ namespace i18n.Core.Abstractions.Domain
                 fileInfo.Create().Close();
             }
 
-            using (var stream = new StreamWriter(filePath))
-            {
-                DebugHelpers.WriteLine("Writing file: {0}", filePath);
-                // Establish ordering of items in PO file.
-                var orderedItems = items.Values
-                    .OrderBy(x => x.References == null || !x.References.Any())
-                    // Non-orphan items before orphan items.
-                    .ThenBy(x => x.MsgKey);
+            using var stream = new StreamWriter(filePath);
+
+            DebugHelpers.WriteLine("Writing file: {0}", filePath);
+            // Establish ordering of items in PO file.
+            var orderedItems = items.Values
+                // Non-orphan items before orphan items.
+                .OrderBy(x => x.References == null || !x.References.Any())
                 // Then order alphanumerically.
+                .ThenBy(x => x.MsgKey);
 
-                // This is required for poedit to read the files correctly if they contains 
-                // for instance swedish characters.
-                stream.WriteLine("msgid \"\"");
-                stream.WriteLine("msgstr \"\"");
-                stream.WriteLine("\"Project-Id-Version: \\n\"");
-                stream.WriteLine("\"POT-Creation-Date: " + DateTime.Now.ToString("yyyy-MM-dd HH:mmzzz") + "\\n\"");
-                stream.WriteLine("\"MIME-Version: 1.0\\n\"");
-                stream.WriteLine("\"Content-Type: text/plain; charset=utf-8\\n\"");
-                stream.WriteLine("\"Content-Transfer-Encoding: 8bit\\n\"");
-                stream.WriteLine("\"X-Generator: i18n.POTGenerator\\n\"");
-                stream.WriteLine();
+            // This is required for poedit to read the files correctly if they contains 
+            // for instance swedish characters.
+            stream.WriteLine("msgid \"\"");
+            stream.WriteLine("msgstr \"\"");
+            stream.WriteLine("\"Project-Id-Version: \\n\"");
+            stream.WriteLine("\"POT-Creation-Date: " + DateTime.Now.ToString("yyyy-MM-dd HH:mmzzz") + "\\n\"");
+            stream.WriteLine("\"MIME-Version: 1.0\\n\"");
+            stream.WriteLine("\"Content-Type: text/plain; charset=utf-8\\n\"");
+            stream.WriteLine("\"Content-Transfer-Encoding: 8bit\\n\"");
+            stream.WriteLine("\"X-Generator: pot\\n\"");
+            stream.WriteLine();
 
-                foreach (var item in orderedItems)
-                {
-                    if (item.Comments != null)
-                    {
-                        foreach (var comment in item.Comments)
-                        {
-                            stream.WriteLine("#. " + comment);
-                        }
-                    }
-
-                    foreach (var reference in item.References)
-                    {
-                        stream.WriteLine("#: " + reference.ToComment());
-                    }
-
-                    if (_localizationOptions.MessageContextEnabledFromComment
-                        && item.Comments != null
-                        && item.Comments.Any())
-                    {
-                        WriteString(stream, true, "msgctxt", item.Comments.First());
-                    }
-
-                    WriteString(stream, true, "msgid", Escape(item.MsgId));
-                    WriteString(stream, true, "msgstr", string.Empty); // enable loading of POT file into editor e.g. PoEdit.
-
-                    stream.WriteLine("");
-                }
-            }
-
-            //we just compare output file with the backed up file to check for changes
-            if (File.Exists(filePath) && File.Exists(backupPath))
+            foreach (var item in orderedItems)
             {
-                //We skip the four first lines since the fourth will always be different (the generation date)
-                var newContent = File.ReadAllLines(filePath).Skip(4).ToList();
-                var oldContent = File.ReadAllLines(backupPath).Skip(4).ToList();
-                if (newContent.Zip(oldContent, (n, o) => o != null && o.Equals(n)).All(b => b))
+                if (item.Comments != null)
                 {
-                    File.Copy(backupPath, filePath, true);
-                    return false;
+                    foreach (var comment in item.Comments)
+                    {
+                        stream.WriteLine("#. " + comment);
+                    }
                 }
+
+                foreach (var reference in item.References)
+                {
+                    stream.WriteLine("#: " + reference.ToComment());
+                }
+
+                if (_localizationOptions.MessageContextEnabledFromComment
+                    && item.Comments != null
+                    && item.Comments.Any())
+                {
+                    WriteString(stream, true, "msgctxt", item.Comments.First());
+                }
+
+                WriteString(stream, true, "msgid", Escape(item.MsgId));
+                WriteString(stream, true, "msgstr", string.Empty); // Enable loading of POT file into editor e.g. PoEdit.
+
+                stream.WriteLine(string.Empty);
             }
+
             return true;
         }
 
