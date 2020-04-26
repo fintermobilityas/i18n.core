@@ -8,6 +8,7 @@
     <IsTestProject>false</IsTestProject>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>pot</ToolCommandName>
+    <Description>Utility for generating POT templates for the i18n.Core project.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.7.82" />

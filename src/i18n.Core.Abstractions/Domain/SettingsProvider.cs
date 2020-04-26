@@ -10,19 +10,29 @@ namespace i18n.Core.Abstractions.Domain
         string ProjectDirectory { get; }
         string GetSetting(string key);
         void SetSetting(string key, string value);
+        void PopulateFromWebConfig(string webConfigFilename);
     }
 
     public class SettingsProvider : ISettingsProvider
     {
         readonly object _syncRoot = new object();
-        readonly Dictionary<string, string> _settings;
+        Dictionary<string, string> _settings;
 
         public string ProjectDirectory { get; }
 
-        public SettingsProvider(string webConfigFilename)
+        public SettingsProvider(string projectDirectory)
         {
-            ProjectDirectory = Path.GetDirectoryName(webConfigFilename);
-            _settings = !File.Exists(webConfigFilename) ? new Dictionary<string, string>() : Parse(webConfigFilename);
+            _settings = new Dictionary<string, string>();
+            ProjectDirectory = projectDirectory ?? throw new ArgumentNullException(nameof(projectDirectory));
+        }
+
+        public void PopulateFromWebConfig(string webConfigFilename)
+        {
+            if (!File.Exists(webConfigFilename)) return;
+            lock (_syncRoot)
+            {
+                _settings = Parse(webConfigFilename);
+            }
         }
 
         static Dictionary<string, string> Parse(string webConfigFilename)
@@ -62,12 +72,7 @@ namespace i18n.Core.Abstractions.Domain
         {
             lock (_syncRoot)
             {
-                if (_settings.TryGetValue(key, out var value))
-                {
-                    return value;
-                }
-
-                return null;
+                return _settings.TryGetValue(key, out var value) ? value : null;
             }
         }
 

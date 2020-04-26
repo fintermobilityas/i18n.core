@@ -13,10 +13,10 @@ namespace pot
     internal class Options
     {
         [Option("show-source-context", Required = false, HelpText = "Append source context to references")]
-        public bool ShowSourceContext { get; set; }
+        public bool ShowSourceContext { get; [UsedImplicitly] set; }
 
         [Option('w', "web-config-path", Required = false, HelpText = "Path to web.config that contain i18n.* settings.")]
-        public string WebConfigPath { get; set; }
+        public string WebConfigPath { get; [UsedImplicitly] set; }
     }
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
@@ -54,13 +54,21 @@ namespace pot
         {
             ReferenceContext.ShowSourceContext = options.ShowSourceContext;
 
-            var webConfigFilename = options.WebConfigPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Web.config");
+            var projectDirectory = options.WebConfigPath != null ? Path.GetDirectoryName(options.WebConfigPath) : Directory.GetCurrentDirectory();
+            var webConfigFilename = options.WebConfigPath ?? projectDirectory;
+
+            if (webConfigFilename.LastIndexOf("Web.config", StringComparison.OrdinalIgnoreCase) == -1)
+            {
+                webConfigFilename = Path.Combine(webConfigFilename, "Web.config");
+            }
 
             var sw = new Stopwatch();
             sw.Restart();
 
-            var settingsProvider = new SettingsProvider(webConfigFilename);
-            var settings = new I18NSettings(settingsProvider);
+            var settingsProvider = (ISettingsProvider) new SettingsProvider(projectDirectory);
+            settingsProvider.PopulateFromWebConfig(webConfigFilename);
+
+            var settings = new I18NLocalizationOptions(settingsProvider);
             var repository = new PoTranslationRepository(settings);
             var nuggetFinder = new FileNuggetFinder(settings);
 
@@ -73,7 +81,7 @@ namespace pot
 
             sw.Stop();
 
-            Console.WriteLine($"po completed successfully. Operation completed in {sw.Elapsed.TotalSeconds:F} seconds.");
+            Console.WriteLine($"Operation completed in {sw.Elapsed.TotalSeconds:F} seconds.");
         }
     }
 }

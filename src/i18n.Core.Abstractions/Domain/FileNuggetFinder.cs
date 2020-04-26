@@ -11,17 +11,17 @@ namespace i18n.Core.Abstractions.Domain
 {
     public class FileNuggetFinder : INuggetFinder
     {
-        readonly I18NSettings _settings;
+        readonly I18NLocalizationOptions _localizationOptions;
         readonly NuggetParser _nuggetParser;
 
-        public FileNuggetFinder(I18NSettings settings)
+        public FileNuggetFinder(I18NLocalizationOptions localizationOptions)
         {
-            _settings = settings;
+            _localizationOptions = localizationOptions;
             _nuggetParser = new NuggetParser(new NuggetTokens(
-                _settings.NuggetBeginToken,
-                _settings.NuggetEndToken,
-                _settings.NuggetDelimiterToken,
-                _settings.NuggetCommentToken),
+                _localizationOptions.NuggetBeginToken,
+                _localizationOptions.NuggetEndToken,
+                _localizationOptions.NuggetDelimiterToken,
+                _localizationOptions.NuggetCommentToken),
                 NuggetParser.Context.SourceProcessing);
         }
 
@@ -31,9 +31,9 @@ namespace i18n.Core.Abstractions.Domain
         /// <returns>All found nuggets.</returns>
         public IDictionary<string, TemplateItem> ParseAll()
         {
-            var fileWhiteList = _settings.WhiteList.ToList();
-            var directoriesToSearchRecursively = _settings.DirectoriesToScan;
-            var fileEnumerator = new FileEnumerator(_settings.BlackList.ToList());
+            var fileWhiteList = _localizationOptions.WhiteList.ToList();
+            var directoriesToSearchRecursively = _localizationOptions.DirectoriesToScan;
+            var fileEnumerator = new FileEnumerator(_localizationOptions.BlackList.ToList());
             var templateItems = new ConcurrentDictionary<string, TemplateItem>();
 
             foreach (var directoryPath in directoriesToSearchRecursively)
@@ -47,7 +47,7 @@ namespace i18n.Core.Abstractions.Domain
                     }
 
                     var currentFullPath = Path.GetDirectoryName(Path.GetFullPath(filePath));
-                    var blacklistFound = _settings.BlackList.Any(blackItem => currentFullPath == null || currentFullPath.StartsWith(blackItem, StringComparison.OrdinalIgnoreCase));
+                    var blacklistFound = _localizationOptions.BlackList.Any(blackItem => currentFullPath == null || currentFullPath.StartsWith(blackItem, StringComparison.OrdinalIgnoreCase));
                     if (blacklistFound)
                     {
                         continue;
@@ -65,7 +65,7 @@ namespace i18n.Core.Abstractions.Domain
                             }
 
                             //we got a match
-                            ParseFile(_settings.ProjectDirectory, filePath, templateItems);
+                            ParseFile(_localizationOptions.ProjectDirectory, filePath, templateItems);
                             break;
                         }
 
@@ -75,7 +75,7 @@ namespace i18n.Core.Abstractions.Domain
                         }
 
                         //we got a match
-                        ParseFile(_settings.ProjectDirectory, filePath, templateItems);
+                        ParseFile(_localizationOptions.ProjectDirectory, filePath, templateItems);
                         break;
                     }
                 }
@@ -94,7 +94,7 @@ namespace i18n.Core.Abstractions.Domain
 
             _nuggetParser.ParseString(fs.ReadToEnd(), delegate (string nuggetString, int pos, Nugget nugget, string iEntity)
             {
-                var referenceContext = _settings.DisableReferences
+                var referenceContext = _localizationOptions.DisableReferences
                     ? ReferenceContext.Create("Disabled references", iEntity, 0)
                     : ReferenceContext.Create(referencePath, iEntity, pos);
                 var fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -120,7 +120,7 @@ namespace i18n.Core.Abstractions.Domain
         {
             var msgid = nugget.MsgId.Replace("\r\n", "\n").Replace("\r", "\\n");
             // NB: In memory msgids are normalized so that LFs are converted to "\n" char sequence.
-            var key = TemplateItem.KeyFromMsgidAndComment(msgid, nugget.Comment, _settings.MessageContextEnabledFromComment);
+            var key = TemplateItem.KeyFromMsgidAndComment(msgid, nugget.Comment, _localizationOptions.MessageContextEnabledFromComment);
             List<string> tmpList;
             //
             templateItems.AddOrUpdate(
@@ -153,7 +153,7 @@ namespace i18n.Core.Abstractions.Domain
                 // Update routine.
                 (k, v) =>
                 {
-                    if (!_settings.DisableReferences)
+                    if (!_localizationOptions.DisableReferences)
                     {
                         var newReferences = new List<ReferenceContext>(v.References.ToList())
                         {
@@ -168,7 +168,7 @@ namespace i18n.Core.Abstractions.Domain
                     }
 
                     tmpList = v.Comments != null ? v.Comments.ToList() : new List<string>();
-                    if (!_settings.DisableReferences || !tmpList.Contains(nugget.Comment))
+                    if (!_localizationOptions.DisableReferences || !tmpList.Contains(nugget.Comment))
                     {
                         tmpList.Add(nugget.Comment);
                     }

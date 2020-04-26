@@ -4,6 +4,10 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>i18n.Core.Abstractions</RootNamespace>
     <AssemblyNamespace>i18n.Core.Abstractions</AssemblyNamespace>
+    <IsPackable>true</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <PackageId>i18n.Core.Abstractions</PackageId>
+    <Description>Core abstractions package for the i18n project.</Description>
   </PropertyGroup>
 
   <ItemGroup>

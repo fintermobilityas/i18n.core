@@ -9,18 +9,19 @@ namespace i18n.Core.Abstractions.Domain
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public sealed class I18NSettings
+    public sealed class I18NLocalizationOptions
     {
         const string Prefix = "i18n.";
         const string AllToken = "*";
         const string OneToken = "?";
         readonly ISettingsProvider _settingsProvider;
 
-        public string ProjectDirectory => _settingsProvider.ProjectDirectory;
+        public string ProjectDirectory { get; }
 
-        public I18NSettings(ISettingsProvider settingsProvider)
+        public I18NLocalizationOptions(ISettingsProvider settingsProvider)
         {
             _settingsProvider = settingsProvider;
+            ProjectDirectory = _settingsProvider.ProjectDirectory;
         }
 
         static string GetPrefixedString(string key)
@@ -490,7 +491,7 @@ namespace i18n.Core.Abstractions.Domain
         public bool GenerateTemplatePerFile
         {
             get
-            { 
+            {
                 var prefixedString = GetPrefixedString("GenerateTemplatePerFile");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var result = !string.IsNullOrEmpty(setting) && setting == "true";
@@ -499,6 +500,22 @@ namespace i18n.Core.Abstractions.Domain
             set
             {
                 var prefixedString = GetPrefixedString("GenerateTemplatePerFile");
+                _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
+            }
+        }
+
+        public bool Watch
+        {
+            get
+            {
+                var prefixedString = GetPrefixedString("Watch");
+                var setting = _settingsProvider.GetSetting(prefixedString);
+                var result = !string.IsNullOrEmpty(setting) && setting == "true";
+                return result;
+            }
+            set
+            {
+                var prefixedString = GetPrefixedString("Watch");
                 _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
             }
         }

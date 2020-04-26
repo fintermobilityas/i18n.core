@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace i18n.Core.PortableObject
     /// </summary>
     public class PoParser
     {
-        static readonly Dictionary<char, char> _escapeTranslations = new Dictionary<char, char> {
+        static readonly Dictionary<char, char> EscapeTranslations = new Dictionary<char, char> {
             { 'n', '\n' },
             { 'r', '\r' },
             { 't', '\t' }
@@ -29,7 +30,7 @@ namespace i18n.Core.PortableObject
             string line;
             while ((line = reader.ReadLine()) != null)
             {
-                (var context, var content) = ParseLine(line);
+                var (context, content) = ParseLine(line);
 
                 if (context == PoContext.Other)
                 {
@@ -37,7 +38,8 @@ namespace i18n.Core.PortableObject
                 }
 
                 // msgid or msgctxt are first lines of the entry. If builder contains valid entry return it and start building a new one.
-                if ((context == PoContext.MessageId || context == PoContext.MessageContext) && entryBuilder.ShouldFlushRecord)
+                if ((context == PoContext.MessageId 
+                     || context == PoContext.MessageContext) && entryBuilder.ShouldFlushRecord)
                 {
                     yield return entryBuilder.BuildRecordAndReset();
                 }
@@ -51,7 +53,7 @@ namespace i18n.Core.PortableObject
             }
         }
 
-        string Unescape(string str)
+        static string Unescape(string str)
         {
             StringBuilder sb = null;
             var escaped = false;
@@ -68,16 +70,9 @@ namespace i18n.Core.PortableObject
                             sb.Append(str.Substring(0, i - 1));
                         }
                     }
-                    char unescaped;
-                    if (_escapeTranslations.TryGetValue(c, out unescaped))
-                    {
-                        sb.Append(unescaped);
-                    }
-                    else
-                    {
-                        // General rule: \x ==> x
-                        sb.Append(c);
-                    }
+
+                    sb.Append(EscapeTranslations.TryGetValue(c, out var unescaped) ? unescaped : c);
+
                     escaped = false;
                 }
                 else
@@ -86,9 +81,9 @@ namespace i18n.Core.PortableObject
                     {
                         escaped = true;
                     }
-                    else if (sb != null)
+                    else
                     {
-                        sb.Append(c);
+                        sb?.Append(c);
                     }
                 }
             }
@@ -133,10 +128,12 @@ namespace i18n.Core.PortableObject
             }
         }
 
+        [SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local")]
         class DictionaryRecordBuilder
         {
             readonly List<string> _values;
-            IEnumerable<string> _validValues => _values.Where(value => !string.IsNullOrEmpty(value));
+            IEnumerable<string> ValidValues => _values.Where(value => !string.IsNullOrEmpty(value));
             PoContext _context;
 
             public string MessageId { get; private set; }
@@ -144,7 +141,7 @@ namespace i18n.Core.PortableObject
 
             public IEnumerable<string> Values => _values;
 
-            public bool IsValid => !string.IsNullOrEmpty(MessageId) && _validValues.Any();
+            public bool IsValid => !string.IsNullOrEmpty(MessageId) && ValidValues.Any();
             public bool ShouldFlushRecord => IsValid && _context == PoContext.Translation;
 
             public DictionaryRecordBuilder()
@@ -185,7 +182,7 @@ namespace i18n.Core.PortableObject
                     case PoContext.Translation:
                         if (_values.Count > 0)
                         {
-                            _values[_values.Count - 1] += text;
+                            _values[^1] += text;
                         }
                         break;
                 }
@@ -198,7 +195,7 @@ namespace i18n.Core.PortableObject
                     return null;
                 }
 
-                var result = new CultureDictionaryRecord(MessageId, MessageContext, _validValues.ToArray());
+                var result = new CultureDictionaryRecord(MessageId, MessageContext, ValidValues.ToArray());
 
                 MessageId = null;
                 MessageContext = null;

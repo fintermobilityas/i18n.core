@@ -4,6 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>i18n.Core</RootNamespace>
     <AssemblyNamespace>i18n.Core</AssemblyNamespace>
+    <IsPackable>true</IsPackable>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>

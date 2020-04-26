@@ -16,11 +16,11 @@ namespace i18n.Core.Abstractions.Domain
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class PoTranslationRepository : ITranslationRepository
     {
-        readonly I18NSettings _settings;
+        readonly I18NLocalizationOptions _localizationOptions;
 
-        public PoTranslationRepository(I18NSettings settings)
+        public PoTranslationRepository(I18NLocalizationOptions localizationOptions)
         {
-            _settings = settings;
+            _localizationOptions = localizationOptions;
         }
 
         public Translation GetTranslation(string langtag, List<string> fileNames = null, bool loadingCache = true)
@@ -37,7 +37,7 @@ namespace i18n.Core.Abstractions.Domain
             //todo: ideally we want to fill the other data in the Language object so this is usable by project incorporating i18n that they can simply
             // lookup available languages. Maybe we even add a country property so that it's easier for projects to add corresponding flags.
 
-            var languages = _settings.AvailableLanguages.ToList();
+            var languages = _localizationOptions.AvailableLanguages.ToList();
             Language item;
             var availableLanguages = new List<Language>();
 
@@ -92,7 +92,7 @@ namespace i18n.Core.Abstractions.Domain
         /// <returns>True if language exists, otherwise false</returns>
         public bool TranslationExists(string langtag)
         {
-            var languages = _settings.AvailableLanguages.ToList();
+            var languages = _localizationOptions.AvailableLanguages.ToList();
 
             if (languages.Count == 0
                 || languages.Count == 1 && languages[0] == string.Empty)
@@ -110,7 +110,7 @@ namespace i18n.Core.Abstractions.Domain
         /// <param name="translation">The translation you wish to save. Must have Language shortag filled out.</param>
         public void SaveTranslation(Translation translation)
         {
-            var templateFilePath = Path.Combine(GetAbsoluteLocaleDir(), _settings.LocaleFilename + ".pot");
+            var templateFilePath = Path.Combine(GetAbsoluteLocaleDir(), _localizationOptions.LocaleFilename + ".pot");
             var potDate = DateTime.Now;
 
             if (File.Exists(templateFilePath))
@@ -204,7 +204,7 @@ namespace i18n.Core.Abstractions.Domain
                     }
                 }
 
-                if (_settings.MessageContextEnabledFromComment
+                if (_localizationOptions.MessageContextEnabledFromComment
                     && item.ExtractedComments != null
                     && item.ExtractedComments.Count() != 0)
                 {
@@ -224,7 +224,7 @@ namespace i18n.Core.Abstractions.Domain
         /// <param name="items">A list of template items to save. The list should be all template items for the entire project.</param>
         public bool SaveTemplate(IDictionary<string, TemplateItem> items)
         {
-            if (!_settings.GenerateTemplatePerFile)
+            if (!_localizationOptions.GenerateTemplatePerFile)
             {
                 return SaveTemplate(items, string.Empty);
             }
@@ -234,13 +234,13 @@ namespace i18n.Core.Abstractions.Domain
             {
                 result |= SaveTemplate(item.ToDictionary(x => x.Key, x => x.Value), item.Key);
             }
-            return result;
 
+            return result;
         }
 
         bool SaveTemplate(IDictionary<string, TemplateItem> items, string fileName)
         {
-            var filePath = Path.Combine(GetAbsoluteLocaleDir(), !string.IsNullOrWhiteSpace(fileName) ? fileName : _settings.LocaleFilename) + ".pot";
+            var filePath = Path.Combine(GetAbsoluteLocaleDir(), !string.IsNullOrWhiteSpace(fileName) ? fileName : _localizationOptions.LocaleFilename) + ".pot";
             var backupPath = filePath + ".backup";
 
             if (File.Exists(filePath)) //we backup one version. more advanced backup solutions could be added here.
@@ -305,15 +305,15 @@ namespace i18n.Core.Abstractions.Domain
                         stream.WriteLine("#: " + reference.ToComment());
                     }
 
-                    if (_settings.MessageContextEnabledFromComment
+                    if (_localizationOptions.MessageContextEnabledFromComment
                         && item.Comments != null
-                        && item.Comments.Count() != 0)
+                        && item.Comments.Any())
                     {
                         WriteString(stream, true, "msgctxt", item.Comments.First());
                     }
 
                     WriteString(stream, true, "msgid", Escape(item.MsgId));
-                    WriteString(stream, true, "msgstr", ""); // enable loading of POT file into editor e.g. PoEdit.
+                    WriteString(stream, true, "msgstr", string.Empty); // enable loading of POT file into editor e.g. PoEdit.
 
                     stream.WriteLine("");
                 }
@@ -340,14 +340,14 @@ namespace i18n.Core.Abstractions.Domain
         /// <returns>the locale directory in absolute path</returns>
         string GetAbsoluteLocaleDir()
         {
-            return _settings.LocaleDirectory;
+            return _localizationOptions.LocaleDirectory;
         }
 
         string GetPathForLanguage(string langtag, string filename = null)
         {
             if (!filename.IsSet())
             {
-                filename = _settings.LocaleFilename;
+                filename = _localizationOptions.LocaleFilename;
             }
 
             return Path.Combine(GetAbsoluteLocaleDir(), langtag, filename + ".po");
@@ -374,14 +374,14 @@ namespace i18n.Core.Abstractions.Domain
 
             var paths = new List<string>();
 
-            if (!_settings.GenerateTemplatePerFile || loadingCache)
+            if (!_localizationOptions.GenerateTemplatePerFile || loadingCache)
             {
                 paths.Add(GetPathForLanguage(langTag));
             }
 
-            paths.AddRange(_settings.LocaleOtherFiles.Where(file => file.IsSet()).Select(file => GetPathForLanguage(langTag, file)));
+            paths.AddRange(_localizationOptions.LocaleOtherFiles.Where(file => file.IsSet()).Select(file => GetPathForLanguage(langTag, file)));
 
-            if (_settings.GenerateTemplatePerFile && !loadingCache)
+            if (_localizationOptions.GenerateTemplatePerFile && !loadingCache)
             {
                 if (fileNames != null && fileNames.Count > 0)
                 {
