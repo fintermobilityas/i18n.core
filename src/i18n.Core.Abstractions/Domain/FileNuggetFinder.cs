@@ -31,7 +31,7 @@ namespace i18n.Core.Abstractions.Domain
         /// <returns>All found nuggets.</returns>
         public IDictionary<string, TemplateItem> ParseAll()
         {
-            var fileWhiteList = _localizationOptions.WhiteList.ToList();
+            var whiteListItems = _localizationOptions.WhiteList.ToList();
             var directoriesToSearchRecursively = _localizationOptions.DirectoriesToScan;
             var fileEnumerator = new FileEnumerator(_localizationOptions.BlackList.ToList());
             var templateItems = new ConcurrentDictionary<string, TemplateItem>();
@@ -53,28 +53,32 @@ namespace i18n.Core.Abstractions.Domain
                         continue;
                     }
 
-                    //we check every filePath against our white list. if it's on there in at least one form we check it.
-                    foreach (var whiteListItem in fileWhiteList)
+                    foreach (var whiteListItem in whiteListItems)
                     {
-                        //We have a catch all for a filetype
                         if (whiteListItem.StartsWith("*."))
                         {
-                            if (Path.GetExtension(filePath) != whiteListItem.Substring(1))
+                            var fileName = Path.GetFileName(filePath);
+                            var dotStartindex = fileName.IndexOf(".", StringComparison.Ordinal);
+                            if (dotStartindex == -1)
                             {
                                 continue;
                             }
 
-                            //we got a match
+                            var extension = fileName.Substring(dotStartindex);
+                            if (!extension.Equals(whiteListItem.Substring(1), StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
                             ParseFile(_localizationOptions.ProjectDirectory, filePath, templateItems);
                             break;
                         }
 
-                        if (Path.GetFileName(filePath) != whiteListItem)
+                        if (Path.GetFileName(filePath).Equals(whiteListItem, StringComparison.Ordinal))
                         {
                             continue;
                         }
 
-                        //we got a match
                         ParseFile(_localizationOptions.ProjectDirectory, filePath, templateItems);
                         break;
                     }
