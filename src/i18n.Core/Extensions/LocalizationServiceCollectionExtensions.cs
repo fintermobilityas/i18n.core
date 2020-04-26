@@ -1,9 +1,9 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using i18n.Core;
 using i18n.Core.Abstractions;
-using i18n.Core.Middleware;
+using i18n.Core.Abstractions.Domain;
 using i18n.Core.PortableObject;
-using JetBrains.Annotations;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -21,39 +21,33 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Registers the services to enable localization using Portable Object files.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-        [UsedImplicitly]
-        public static IServiceCollection AddI18NLocalization(this IServiceCollection services)
+        /// <param name="i18NLocaleDirectory"></param>
+        /// <param name="requestLocalizationSetup">An action to configure the Microsoft.Extensions.Localization.LocalizationOptions.</param>
+        [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+        public static IServiceCollection AddI18NLocalization([JetBrains.Annotations.NotNull] this IServiceCollection services, [JetBrains.Annotations.NotNull] string i18NLocaleDirectory, Action<RequestLocalizationOptions> requestLocalizationSetup = null)
         {
-            return AddI18NLocalization(services, null);
-        }
+            if (services == null) throw new ArgumentNullException(nameof(services));
+            if (i18NLocaleDirectory == null) throw new ArgumentNullException(nameof(i18NLocaleDirectory));
 
-        /// <summary>
-        /// Registers the services to enable localization using Portable Object files.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-        /// <param name="setupAction">An action to configure the Microsoft.Extensions.Localization.LocalizationOptions.</param>
-        public static IServiceCollection AddI18NLocalization(this IServiceCollection services, Action<LocalizationOptions> setupAction)
-        {
             services.AddSingleton<IPluralRuleProvider, DefaultPluralRuleProvider>();
             services.AddSingleton<ITranslationProvider, PoFilesTranslationsProvider>();
             services.AddSingleton<ILocalizationFileLocationProvider, ContentRootPoFileLocationProvider>();
             services.AddSingleton<ILocalizationManager, LocalizationManager>();
             services.AddSingleton<IStringLocalizerFactory, PortableObjectStringLocalizerFactory>();
             services.AddSingleton<IHtmlLocalizerFactory, PortableObjectHtmlLocalizerFactory>();
+            services.AddSingleton<ISettingsProvider>(x => new SettingsProvider(i18NLocaleDirectory));
+           
             services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
 
-            if (setupAction != null)
+            if (requestLocalizationSetup != null)
             {
-                services.Configure(setupAction);
+                services.Configure(requestLocalizationSetup);
             }
 
-            return services;
-        }
+            services.AddSingleton(x => 
+                Options.Options.Create(new I18NLocalizationOptions(x.GetRequiredService<ISettingsProvider>())));
 
-        public static IApplicationBuilder AddI18NLocalizationMiddlware(this IApplicationBuilder app)
-        {
-            app.UseMiddleware<I18NMiddleware>();
-            return app;
+            return services;
         }
     }
 }

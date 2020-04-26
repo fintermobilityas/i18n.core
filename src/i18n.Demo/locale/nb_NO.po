@@ -1,0 +1,102 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2020-04-26 22:49+02:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: nb_NO\n"
+
+#: Views\Shared\Error.cshtml:7
+msgid "An error occurred while processing your request"
+msgstr "En feil har oppstått ved behandling av din forespørsel"
+
+#: Views\Shared\Error.cshtml:24
+msgid "and restarting the app"
+msgstr "og start applikasjonen på nytt"
+
+#: Views\Home\Index.cshtml:7
+msgid "building Web apps with ASP.NET Core"
+msgstr "bygg Web-applikasjoner med ASP.NET Core"
+
+#: Views\Shared\Error.cshtml:18
+msgid "Development"
+msgstr "Utvikling"
+
+#: Views\Shared\Error.cshtml:16
+msgid "Development Mode"
+msgstr "Utviklingsmodus"
+
+#: Views\Shared\Error.cshtml:23
+msgid "environment by setting the"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:23
+msgid "environment variable to"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:18
+msgid ""
+"environment will display more detailed information about the error that "
+"occurred"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:3 Views\Shared\Error.cshtml:6
+msgid "Error"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:23
+msgid "For local debugging, enable the"
+msgstr ""
+
+#: Views\Shared\_Layout.cshtml:22
+msgid "Home"
+msgstr "Hjem"
+
+#: Views\Home\Index.cshtml:2
+msgid "Home Page"
+msgstr "Hjemmside"
+
+#: Views\Shared\Error.cshtml:22
+msgid ""
+"It can result in displaying sensitive information from exceptions to end "
+"users"
+msgstr ""
+
+#: Views\Home\Index.cshtml:7
+msgid "Learn about"
+msgstr "Lær om"
+
+#: Views\Shared\_Layout.cshtml:25 Views\Shared\_Layout.cshtml:40
+msgid "Privacy"
+msgstr ""
+
+#: Views\Home\Privacy.cshtml:2
+msgid "Privacy Policy"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:12
+msgid "Request ID"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:18
+msgid "Swapping to"
+msgstr ""
+
+#: Views\Shared\Error.cshtml:21
+msgid ""
+"The Development environment shouldn't be enabled for deployed applications"
+msgstr ""
+
+#: Views\Home\Privacy.cshtml:6
+msgid "Use this page to detail your site's privacy policy"
+msgstr ""
+
+#: Views\Home\Index.cshtml:6
+msgid "Welcome"
+msgstr "Velkommen"

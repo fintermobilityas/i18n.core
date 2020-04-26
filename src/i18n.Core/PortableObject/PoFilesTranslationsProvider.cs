@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using i18n.Core.Abstractions;
 using Microsoft.Extensions.FileProviders;
 
@@ -25,20 +28,24 @@ namespace i18n.Core.PortableObject
         /// <inheritdocs />
         public void LoadTranslations(string cultureName, CultureDictionary dictionary)
         {
-            foreach (var fileInfo in _poFilesLocationProvider.GetLocations(cultureName))
-            {
-                LoadFileToDictionary(fileInfo, dictionary);
-            }
-        }
+            var fileInfos = new List<IFileInfo>();
+            fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName));
+            fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName.Replace("-", "_")));
 
-        void LoadFileToDictionary(IFileInfo fileInfo, CultureDictionary dictionary)
-        {
-            if (fileInfo.Exists && !fileInfo.IsDirectory)
+            var cultureNames = cultureName.Length != 2 ? cultureName.Split("-", StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>();
+            if (cultureNames.Count == 2)
+            {
+                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureNames[1]));
+            }
+
+            foreach (var fileInfo in fileInfos.Where(x => x.Exists && !x.IsDirectory))
             {
                 using var stream = fileInfo.CreateReadStream();
                 using var reader = new StreamReader(stream);
                 dictionary.MergeTranslations(_parser.Parse(reader));
+                break;
             }
         }
+
     }
 }

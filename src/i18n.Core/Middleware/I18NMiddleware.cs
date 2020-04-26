@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using i18n.Core.Abstractions;
+using i18n.Core.Abstractions.Domain;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Options;
 using Microsoft.IO;
 
 namespace i18n.Core.Middleware
@@ -25,12 +28,14 @@ namespace i18n.Core.Middleware
         };
 
         readonly RequestDelegate _next;
-        readonly IViewLocalizer _localizer;
+        readonly ILocalizationManager _localizationManager;
+        I18NLocalizationOptions _localizationOptions;
 
-        public I18NMiddleware(RequestDelegate next, IViewLocalizer localizer)
+        public I18NMiddleware(RequestDelegate next, IOptions<I18NLocalizationOptions> options, ILocalizationManager localizationManager)
         {
             _next = next;
-            _localizer = localizer;
+            _localizationManager = localizationManager;
+            _localizationOptions = options.Value;
         }
 
         // https://dejanstojanovic.net/aspnet/2018/august/minify-aspnet-mvc-core-response-using-custom-middleware-and-pipeline/
@@ -79,7 +84,7 @@ namespace i18n.Core.Middleware
                         responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
                     }
 
-                    responseBody = ReplaceNuggets(_localizer, responseBody);
+                    responseBody = ReplaceNuggets(CultureInfo.CurrentCulture, responseBody);
 
                     var requestContent = new StringContent(responseBody, Encoding.UTF8, contentType);
                     context.Response.Body = await requestContent.ReadAsStreamAsync().ConfigureAwait(false);
@@ -106,9 +111,11 @@ namespace i18n.Core.Middleware
             await response.Body.DisposeAsync().ConfigureAwait(false);
             response.Body = originBody;
         }
-
-        static string ReplaceNuggets(IHtmlLocalizer localizer, string text)
+        
+        string ReplaceNuggets(CultureInfo cultureInfo, string text)
         { 
+            var cultureDictionary = _localizationManager.GetDictionary(cultureInfo);
+
             string ReplaceNuggets(Match match)
             {
                 var textInclNugget = match.Value;
@@ -121,7 +128,8 @@ namespace i18n.Core.Middleware
                     searchText = textExclNugget.Substring(0, textExclNugget.IndexOf("///", StringComparison.Ordinal));
                 }
 
-                return localizer.GetString(searchText);
+                var translationText = cultureDictionary[searchText];
+                return translationText ?? searchText;
             }
 
             return NuggetFindRegex.Replace(text, ReplaceNuggets);

@@ -18,9 +18,14 @@ namespace i18n.Core.Abstractions.Domain
 
         public string ProjectDirectory { get; }
 
+        public I18NLocalizationOptions() : this(new SettingsProvider(Directory.GetCurrentDirectory()))
+        {
+
+        }
+
         public I18NLocalizationOptions(ISettingsProvider settingsProvider)
         {
-            _settingsProvider = settingsProvider;
+            _settingsProvider = settingsProvider ?? throw new ArgumentNullException(nameof(settingsProvider));
             ProjectDirectory = _settingsProvider.ProjectDirectory;
         }
 

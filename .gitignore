@@ -3,3 +3,5 @@ bin/
 obj/
 nupkgs/
 build/
+src/i18n.Demo/locale/*.pot.backup
+src/i18n.Demo/locale/*.mo
