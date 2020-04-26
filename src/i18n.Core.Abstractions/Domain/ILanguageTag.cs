@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace i18n.Core.Abstractions.Domain.Abstract
+namespace i18n.Core.Abstractions.Domain
 {
     /// <summary>
     /// Describes a language tag value, as defined in RFC 5646 (BCP 47).

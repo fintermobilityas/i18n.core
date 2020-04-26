@@ -2,10 +2,10 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
-namespace i18n.Core.Abstractions.Domain.Entities
+namespace i18n.Core.Pot.Entities
 {
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    public sealed class ReferenceContext
+    internal sealed class ReferenceContext
     {
         public static bool ShowSourceContext { get; set; }
 

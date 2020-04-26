@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using i18n.Core.Abstractions;
+using JetBrains.Annotations;
 using Microsoft.Extensions.FileProviders;
 
 namespace i18n.Core.PortableObject
@@ -10,32 +12,39 @@ namespace i18n.Core.PortableObject
     /// <summary>
     /// Represents a provider that provides a translations for .po files.
     /// </summary>
-    public class PoFilesTranslationsProvider : ITranslationProvider
+    public class PortableObjectFilesTranslationsProvider : ITranslationProvider
     {
         readonly ILocalizationFileLocationProvider _poFilesLocationProvider;
-        readonly PoParser _parser;
+        readonly PortableObjectParser _parser;
 
         /// <summary>
-        /// Creates a new instance of <see cref="PoFilesTranslationsProvider"/>.
+        /// Creates a new instance of <see cref="PortableObjectFilesTranslationsProvider"/>.
         /// </summary>
         /// <param name="poFileLocationProvider">The <see cref="ILocalizationFileLocationProvider"/>.</param>
-        public PoFilesTranslationsProvider(ILocalizationFileLocationProvider poFileLocationProvider)
+        public PortableObjectFilesTranslationsProvider(ILocalizationFileLocationProvider poFileLocationProvider)
         {
             _poFilesLocationProvider = poFileLocationProvider;
-            _parser = new PoParser();
+            _parser = new PortableObjectParser();
         }
 
         /// <inheritdocs />
-        public void LoadTranslations(string cultureName, CultureDictionary dictionary)
+        public void LoadTranslations([NotNull] CultureInfo cultureInfo, [NotNull] CultureDictionary dictionary)
         {
-            var fileInfos = new List<IFileInfo>();
-            fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName));
-            fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName.Replace("-", "_")));
+            if (cultureInfo == null) throw new ArgumentNullException(nameof(cultureInfo));
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
 
-            var cultureNames = cultureName.Length != 2 ? cultureName.Split("-", StringSplitOptions.RemoveEmptyEntries).ToList() : new List<string>();
-            if (cultureNames.Count == 2)
+            var fileInfos = new List<IFileInfo>();
+            var cultureName = cultureInfo.Name;
+            fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName));
+
+            if (cultureName.IndexOf("-", StringComparison.Ordinal) != -1)
             {
-                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureNames[1]));
+                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName.Replace("-", "_")));
+            }
+
+            if (cultureName != cultureInfo.Name)
+            {
+                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureInfo.Name));
             }
 
             foreach (var fileInfo in fileInfos.Where(x => x.Exists && !x.IsDirectory))

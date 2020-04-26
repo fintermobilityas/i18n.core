@@ -7,14 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using i18n.Core.Abstractions.Domain.Abstract;
-using i18n.Core.Abstractions.Domain.Entities;
-using i18n.Core.Abstractions.Domain.Helpers;
+using i18n.Core.Abstractions.Domain;
+using i18n.Core.Pot.Entities;
+using i18n.Core.Pot.Helpers;
 
-namespace i18n.Core.Abstractions.Domain
+namespace i18n.Core.Pot
 {
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public class PoTranslationRepository : ITranslationRepository
+    internal class PoTranslationRepository : ITranslationRepository
     {
         readonly I18NLocalizationOptions _localizationOptions;
 

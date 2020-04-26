@@ -3,8 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using i18n.Core.Abstractions.Domain.Abstract;
-using i18n.Core.Abstractions.Domain.Helpers;
+using i18n.Core.Abstractions.Extensions;
 
 namespace i18n.Core.Abstractions.Domain
 {
@@ -620,7 +619,6 @@ namespace i18n.Core.Abstractions.Domain
             var lhs = new LanguageTag(i_langtag_lhs);
             var rhs = new LanguageTag(i_langtag_rhs);
             var score = lhs.Match(rhs);
-            DebugHelpers.WriteLine("LanguageTag.Trace_Match -- Match({0}, {1}) = {2}", i_langtag_lhs, i_langtag_rhs, score.ToString());
         }
         [Conditional("DEBUG")]
         public static void Trace()

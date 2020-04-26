@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
-using i18n.Core.Abstractions.Domain.Entities;
+using i18n.Core.Pot.Entities;
 
-namespace i18n.Core.Abstractions.Domain.Abstract
+namespace i18n.Core.Pot
 {
     /// <summary>
     /// For managing a translation repository for reading, writing and searching. As long as you implement this you can store your translation wherever you want. Db/ po files/xml
     /// </summary>
-    public interface ITranslationRepository
+    internal interface ITranslationRepository
     {
         /// <summary>
         /// Retrieves a translation with all items (both with translation set and not)

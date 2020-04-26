@@ -3,13 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using i18n.Core.Abstractions.Domain.Abstract;
-using i18n.Core.Abstractions.Domain.Entities;
-using i18n.Core.Abstractions.Domain.Helpers;
+using i18n.Core.Abstractions.Domain;
+using i18n.Core.Pot.Entities;
+using i18n.Core.Pot.Helpers;
 
-namespace i18n.Core.Abstractions.Domain
+namespace i18n.Core.Pot
 {
-    public class FileNuggetFinder : INuggetFinder
+    internal class FileNuggetFinder : INuggetFinder
     {
         readonly I18NLocalizationOptions _localizationOptions;
         readonly NuggetParser _nuggetParser;

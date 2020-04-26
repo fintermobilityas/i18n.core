@@ -15,6 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// <summary>
     /// Provides extension methods for <see cref="IServiceCollection"/>.
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
     public static class LocalizationServiceCollectionExtensions
     {
         /// <summary>
@@ -30,7 +31,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (i18NLocaleDirectory == null) throw new ArgumentNullException(nameof(i18NLocaleDirectory));
 
             services.AddSingleton<IPluralRuleProvider, DefaultPluralRuleProvider>();
-            services.AddSingleton<ITranslationProvider, PoFilesTranslationsProvider>();
+            services.AddSingleton<ITranslationProvider, PortableObjectFilesTranslationsProvider>();
             services.AddSingleton<ILocalizationFileLocationProvider, ContentRootPoFileLocationProvider>();
             services.AddSingleton<ILocalizationManager, LocalizationManager>();
             services.AddSingleton<IStringLocalizerFactory, PortableObjectStringLocalizerFactory>();

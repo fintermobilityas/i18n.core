@@ -53,7 +53,7 @@ namespace i18n.Core
                 }
 
                 var dictionary = new CultureDictionary(culture.Name, rule ?? DefaultPluralRule);
-                _translationProvider.LoadTranslations(culture.Name, dictionary);
+                _translationProvider.LoadTranslations(culture, dictionary);
 
                 return dictionary;
             }, LazyThreadSafetyMode.ExecutionAndPublication));

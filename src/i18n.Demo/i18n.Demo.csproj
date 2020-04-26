@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="locale\nb_NO.po" Link="locale\nb-NO.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="locale\messages.pot" Link="locale\en-US.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="locale\nb_NO.po" Link="locale\no.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="locale\messages.pot" Link="locale\en.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
     <None Remove="locale\*.pot" />
     <None Remove="locale\*.pot.backup" />
     <None Remove="locale\*.mo" />

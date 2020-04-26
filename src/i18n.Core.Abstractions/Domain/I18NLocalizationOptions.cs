@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using i18n.Core.Abstractions.Domain.Helpers;
+using i18n.Core.Abstractions.Extensions;
 
 namespace i18n.Core.Abstractions.Domain
 {

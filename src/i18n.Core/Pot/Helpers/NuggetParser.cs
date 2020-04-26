@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace i18n.Core.Abstractions.Domain.Helpers
+namespace i18n.Core.Pot.Helpers
 {
     /// <summary>
     /// Describes a valid set of string tokens that define the format of a Nugget.
@@ -18,7 +18,7 @@ namespace i18n.Core.Abstractions.Domain.Helpers
     ///   DelimiterToken = "|||"
     ///   CommentToken = "///"
     /// </remarks>
-    public class NuggetTokens
+    internal class NuggetTokens
     {
         public string BeginToken { get; }
         public string EndToken { get; }
@@ -116,7 +116,7 @@ namespace i18n.Core.Abstractions.Domain.Helpers
     /// Helper class for locating and processing nuggets in a string.
     /// </summary>
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public class NuggetParser
+    internal class NuggetParser
     {
         /// <summary>
         /// Nuggets may be parsed during the different stages as enumerated here.

@@ -11,7 +11,7 @@ namespace i18n.Core.PortableObject
     /// <summary>
     /// Represents a parser for portable objects.
     /// </summary>
-    public class PoParser
+    public class PortableObjectParser
     {
         static readonly Dictionary<char, char> EscapeTranslations = new Dictionary<char, char> {
             { 'n', '\n' },

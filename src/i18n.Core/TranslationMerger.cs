@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using i18n.Core.Abstractions.Domain.Abstract;
-using i18n.Core.Abstractions.Domain.Entities;
+using i18n.Core.Pot;
+using i18n.Core.Pot.Entities;
 
-namespace i18n.Core.Abstractions.Domain
+namespace i18n.Core
 {
-    public interface ITranslationMerger
+    internal interface ITranslationMerger
     {
         void MergeTranslation(IDictionary<string, TemplateItem> src, Translation dst);
         void MergeAllTranslation(IDictionary<string, TemplateItem> items);
     }
 
-    public class TranslationMerger : ITranslationMerger
+    internal class TranslationMerger : ITranslationMerger
     {
         readonly ITranslationRepository _repository;
 

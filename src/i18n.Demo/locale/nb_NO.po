@@ -60,7 +60,7 @@ msgstr "Hjem"
 
 #: Views\Home\Index.cshtml:2
 msgid "Home Page"
-msgstr "Hjemmside"
+msgstr "Hjemmeside"
 
 #: Views\Shared\Error.cshtml:22
 msgid ""

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace i18n.Core.Abstractions.Domain.Helpers
+namespace i18n.Core.Abstractions.Extensions
 {
     internal static class StringExtensions
     {

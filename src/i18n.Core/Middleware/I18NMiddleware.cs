@@ -9,10 +9,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using i18n.Core.Abstractions;
-using i18n.Core.Abstractions.Domain;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Microsoft.IO;
 
 namespace i18n.Core.Middleware
@@ -29,13 +27,11 @@ namespace i18n.Core.Middleware
 
         readonly RequestDelegate _next;
         readonly ILocalizationManager _localizationManager;
-        I18NLocalizationOptions _localizationOptions;
 
-        public I18NMiddleware(RequestDelegate next, IOptions<I18NLocalizationOptions> options, ILocalizationManager localizationManager)
+        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager)
         {
             _next = next;
             _localizationManager = localizationManager;
-            _localizationOptions = options.Value;
         }
 
         // https://dejanstojanovic.net/aspnet/2018/august/minify-aspnet-mvc-core-response-using-custom-middleware-and-pipeline/
@@ -112,6 +108,7 @@ namespace i18n.Core.Middleware
             response.Body = originBody;
         }
         
+        [SuppressMessage("ReSharper", "UnusedVariable")]
         string ReplaceNuggets(CultureInfo cultureInfo, string text)
         { 
             var cultureDictionary = _localizationManager.GetDictionary(cultureInfo);

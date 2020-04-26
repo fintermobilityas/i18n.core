@@ -3,8 +3,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using CommandLine;
+using i18n.Core;
 using i18n.Core.Abstractions.Domain;
-using i18n.Core.Abstractions.Domain.Entities;
+using i18n.Core.Pot;
+using i18n.Core.Pot.Entities;
 using JetBrains.Annotations;
 
 namespace pot
