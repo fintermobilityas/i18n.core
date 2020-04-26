@@ -1,0 +1,25 @@
+<Project>
+
+  <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OsPlatform Condition="$(OsPlatform) == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">Windows</OsPlatform>
+    <OsPlatform Condition="$(OsPlatform) == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">Linux</OsPlatform>
+    <OsPlatform Condition="$(OsPlatform) == ''">Unknown</OsPlatform>
+    <IsNetCoreApp Condition="$(TargetFramework.StartsWith('netcoreapp'))">true</IsNetCoreApp>
+    <IsNetCoreApp Condition="'$(IsNetCoreApp)' == ''">false</IsNetCoreApp>
+    <IsFullFramework Condition="$(TargetFramework.StartsWith('net48'))">true</IsFullFramework>
+    <IsFullFramework Condition="'$(IsFullFramework)' == ''">false</IsFullFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(IsNetCoreApp)">
+    <DefineConstants>$(DefineConstants);NETCOREAPP;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(IsFullFramework)">
+    <DefineConstants>$(DefineConstants);NETFULLFRAMEWORK;</DefineConstants>
+  </PropertyGroup>
+
+</Project>
