@@ -161,7 +161,7 @@ namespace i18n.Core.PortableObject
             {
                 if (_logger.IsEnabled(LogLevel.Warning))
                 {
-                    _logger.LogWarning("Plural form '{PluralForm}' doesn't exist in values provided by the 'IStringLocalizer.Plural' method. Provided values: {PluralForms}", pluralForm, String.Join(", ", pluralForms));
+                    _logger.LogWarning("Plural form '{PluralForm}' doesn't exist in values provided by the 'IStringLocalizer.Plural' method. Provided values: {PluralForms}", pluralForm, string.Join(", ", pluralForms));
                 }
 
                 // Use the latest available form

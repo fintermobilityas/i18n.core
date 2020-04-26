@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,7 @@ using i18n.Core.Abstractions.Domain.Helpers;
 
 namespace i18n.Core.Abstractions.Domain
 {
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class PoTranslationRepository : ITranslationRepository
     {
         readonly I18NSettings _settings;
@@ -21,13 +23,10 @@ namespace i18n.Core.Abstractions.Domain
             _settings = settings;
         }
 
-        #region load and getters
-
         public Translation GetTranslation(string langtag, List<string> fileNames = null, bool loadingCache = true)
         {
             return ParseTranslationFile(langtag, fileNames, loadingCache);
         }
-
 
         /// <summary>
         /// Checks in first hand settings file, if not found there it checks file structure
@@ -39,29 +38,31 @@ namespace i18n.Core.Abstractions.Domain
             // lookup available languages. Maybe we even add a country property so that it's easier for projects to add corresponding flags.
 
             var languages = _settings.AvailableLanguages.ToList();
-            Language lang;
-            var dirList = new List<Language>();
-
+            Language item;
+            var availableLanguages = new List<Language>();
 
             //This means there was no languages from settings
             if (languages.Count == 0
                 || languages.Count == 1 && languages[0] == "")
             {
                 //We instead check for file structure
-                var di = new DirectoryInfo(GetAbsoluteLocaleDir());
+                var directoryInfo = new DirectoryInfo(GetAbsoluteLocaleDir());
 
-                foreach (var dir in di.EnumerateDirectories().Select(x => x.Name))
+                foreach (var languageShortTag in directoryInfo.EnumerateDirectories().Select(x => x.Name))
                 {
                     try
                     {
-                        var lt = new LanguageTag(dir);
-                        if (lt.CultureInfo == null)
-                            throw new CultureNotFoundException(dir);
-                        lang = new Language
+                        var languageTag = new LanguageTag(languageShortTag);
+                        if (languageTag.CultureInfo == null)
                         {
-                            LanguageShortTag = dir
+                            throw new CultureNotFoundException(languageShortTag);
+                        }
+
+                        item = new Language
+                        {
+                            LanguageShortTag = languageShortTag
                         };
-                        dirList.Add(lang);
+                        availableLanguages.Add(item);
                     }
                     catch (CultureNotFoundException)
                     {
@@ -74,12 +75,12 @@ namespace i18n.Core.Abstractions.Domain
                 //see if the desired language was one of the returned from settings
                 foreach (var language in languages)
                 {
-                    lang = new Language { LanguageShortTag = language };
-                    dirList.Add(lang);
+                    item = new Language { LanguageShortTag = language };
+                    availableLanguages.Add(item);
                 }
             }
 
-            return dirList;
+            return availableLanguages;
 
         }
 
@@ -93,32 +94,14 @@ namespace i18n.Core.Abstractions.Domain
         {
             var languages = _settings.AvailableLanguages.ToList();
 
-            //This means there was no languages from settings
             if (languages.Count == 0
-                || languages.Count == 1 && languages[0] == "")
+                || languages.Count == 1 && languages[0] == string.Empty)
             {
-                //We instead check if the file exists
                 return File.Exists(GetPathForLanguage(langtag));
             }
-            else
-            {
-                //see if the desired language was one of the returned from settings
-                foreach (var language in languages)
-                {
-                    if (language == langtag)
-                    {
-                        return true;
-                    }
-                }
-            }
 
-            //did not exist in settings nor as file, we return false
-            return false;
+            return languages.Any(language => language == langtag);
         }
-
-        #endregion
-
-        #region save
 
         /// <summary>
         /// Saves a translation into file with standard pattern locale/langtag/message.po
@@ -127,8 +110,9 @@ namespace i18n.Core.Abstractions.Domain
         /// <param name="translation">The translation you wish to save. Must have Language shortag filled out.</param>
         public void SaveTranslation(Translation translation)
         {
-            var templateFilePath = GetAbsoluteLocaleDir() + "/" + _settings.LocaleFilename + ".pot";
+            var templateFilePath = Path.Combine(GetAbsoluteLocaleDir(), _settings.LocaleFilename + ".pot");
             var potDate = DateTime.Now;
+
             if (File.Exists(templateFilePath))
             {
                 potDate = File.GetLastWriteTime(templateFilePath);
@@ -153,7 +137,7 @@ namespace i18n.Core.Abstractions.Domain
             if (!File.Exists(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
-                var dirInfo = new DirectoryInfo(Path.GetDirectoryName(filePath));
+                var dirInfo = new DirectoryInfo(Path.GetDirectoryName(filePath) ?? throw new InvalidOperationException());
                 if (!dirInfo.Exists)
                 {
                     dirInfo.Create();
@@ -240,24 +224,23 @@ namespace i18n.Core.Abstractions.Domain
         /// <param name="items">A list of template items to save. The list should be all template items for the entire project.</param>
         public bool SaveTemplate(IDictionary<string, TemplateItem> items)
         {
-            if (_settings.GenerateTemplatePerFile)
-            {
-                var result = false;
-                foreach (var item in items.GroupBy(x => x.Value.FileName))
-                {
-                    result |= SaveTemplate(item.ToDictionary(x => x.Key, x => x.Value), item.Key);
-                }
-                return result;
-            }
-            else
+            if (!_settings.GenerateTemplatePerFile)
             {
                 return SaveTemplate(items, string.Empty);
             }
+
+            var result = false;
+            foreach (var item in items.GroupBy(x => x.Value.FileName))
+            {
+                result |= SaveTemplate(item.ToDictionary(x => x.Key, x => x.Value), item.Key);
+            }
+            return result;
+
         }
 
         bool SaveTemplate(IDictionary<string, TemplateItem> items, string fileName)
         {
-            var filePath = GetAbsoluteLocaleDir() + "/" + (!string.IsNullOrWhiteSpace(fileName) ? fileName : _settings.LocaleFilename) + ".pot";
+            var filePath = Path.Combine(GetAbsoluteLocaleDir(), !string.IsNullOrWhiteSpace(fileName) ? fileName : _settings.LocaleFilename) + ".pot";
             var backupPath = filePath + ".backup";
 
             if (File.Exists(filePath)) //we backup one version. more advanced backup solutions could be added here.
@@ -277,7 +260,7 @@ namespace i18n.Core.Abstractions.Domain
             if (!File.Exists(filePath))
             {
                 var fileInfo = new FileInfo(filePath);
-                var dirInfo = new DirectoryInfo(Path.GetDirectoryName(filePath));
+                var dirInfo = new DirectoryInfo(Path.GetDirectoryName(filePath) ?? throw new InvalidOperationException());
                 if (!dirInfo.Exists)
                 {
                     dirInfo.Create();
@@ -351,12 +334,8 @@ namespace i18n.Core.Abstractions.Domain
             return true;
         }
 
-        #endregion
-
-        #region helpers
-
         /// <summary>
-        /// Gets the locale directory from settings and makes sure it is translated into absolut path
+        /// Gets the locale directory from settings and makes sure it is translated into absolute path
         /// </summary>
         /// <returns>the locale directory in absolute path</returns>
         string GetAbsoluteLocaleDir()
@@ -366,24 +345,29 @@ namespace i18n.Core.Abstractions.Domain
 
         string GetPathForLanguage(string langtag, string filename = null)
         {
-            if (!Helpers.Extensions.IsSet(filename))
+            if (!filename.IsSet())
+            {
                 filename = _settings.LocaleFilename;
+            }
+
             return Path.Combine(GetAbsoluteLocaleDir(), langtag, filename + ".po");
         }
 
         /// <summary>
         /// Parses a PO file into a Language object
         /// </summary>
-        /// <param name="langtag">The language (tag) you wish to load into Translation object</param>
+        /// <param name="langTag">The language (tag) you wish to load into Translation object</param>
+        /// <param name="fileNames"></param>
+        /// <param name="loadingCache"></param>
         /// <returns>A complete translation object with all all translations and language values set.</returns>
-        Translation ParseTranslationFile(string langtag, List<string> fileNames, bool loadingCache)
+        Translation ParseTranslationFile(string langTag, List<string> fileNames, bool loadingCache)
         {
             //todo: consider that lines we don't understand like headers from poedit and #| should be preserved and outputted again.
 
             var translation = new Translation();
             var language = new Language
             {
-                LanguageShortTag = langtag
+                LanguageShortTag = langTag
             };
             translation.LanguageInformation = language;
             var items = new ConcurrentDictionary<string, TranslationItem>();
@@ -392,31 +376,21 @@ namespace i18n.Core.Abstractions.Domain
 
             if (!_settings.GenerateTemplatePerFile || loadingCache)
             {
-                paths.Add(GetPathForLanguage(langtag));
+                paths.Add(GetPathForLanguage(langTag));
             }
 
-            foreach (var file in _settings.LocaleOtherFiles)
-            {
-                if (Helpers.Extensions.IsSet(file))
-                {
-                    paths.Add(GetPathForLanguage(langtag, file));
-                }
-            }
+            paths.AddRange(_settings.LocaleOtherFiles.Where(file => file.IsSet()).Select(file => GetPathForLanguage(langTag, file)));
 
             if (_settings.GenerateTemplatePerFile && !loadingCache)
             {
                 if (fileNames != null && fileNames.Count > 0)
                 {
-                    foreach (var fileName in fileNames)
-                    {
-                        paths.Add(GetPathForLanguage(langtag, fileName));
-                    }
+                    paths.AddRange(fileNames.Select(fileName => GetPathForLanguage(langTag, fileName)));
                 }
             }
 
-            foreach (var path in paths)
+            foreach (var path in paths.Where(File.Exists))
             {
-                if (!File.Exists(path)) continue;
                 DebugHelpers.WriteLine("Reading file: {0}", path);
 
                 using var fs = File.OpenText(path);
@@ -497,24 +471,19 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         /// <summary>
-        /// Removes the preceding characters in a file showing that an item is historical/log. That is to say it has been removed from the project. We don't need care about the character as the fact that it lacks references is what tells us it's a log item
+        /// Removes the preceding characters in a file showing that an item is historical/log. That is to say it has been removed from the project.
+        /// We don't need care about the character as the fact that it lacks references is what tells us it's a log item
         /// </summary>
         /// <param name="line"></param>
         /// <returns></returns>
-        string RemoveCommentIfHistorical(string line)
+        static string RemoveCommentIfHistorical(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
             {
-                //return null;
                 return line;
             }
 
-            if (line.StartsWith("#~"))
-            {
-                return line.Replace("#~", "").Trim();
-            }
-
-            return line;
+            return line.StartsWith("#~") ? line.Replace("#~", "").Trim() : line;
         }
 
         /// <summary>
@@ -553,7 +522,7 @@ namespace i18n.Core.Abstractions.Domain
                 while ((line = fs.ReadLine()) != null)
                 {
                     line = RemoveCommentIfHistorical(line);
-                    if (String.IsNullOrEmpty(line))
+                    if (string.IsNullOrEmpty(line))
                     {
                         DebugHelpers.WriteLine("ERROR - line is empty. Original line: " + originalLine);
                         continue;
@@ -601,7 +570,7 @@ namespace i18n.Core.Abstractions.Domain
         /// <param name="hasReferences"></param>
         /// <param name="type">"msgid" or "msgstr"</param>
         /// <param name="value"></param>
-        static void WriteString(StreamWriter stream, bool hasReferences, string type, string value)
+        static void WriteString(TextWriter stream, bool hasReferences, string type, string value)
         {
             // Logic for outputting multi-line msgid.
             //
@@ -645,10 +614,8 @@ namespace i18n.Core.Abstractions.Domain
             stream.WriteLine(s);
         }
 
-        #region quoting and escaping
-
         //this method removes anything before the first quote and also removes first and last quote
-        string Unquote(string lhs, string quotechar = "\"")
+        static string Unquote(string lhs, string quotechar = "\"")
         {
             var begin = lhs.IndexOf(quotechar, StringComparison.Ordinal);
             if (begin == -1)
@@ -656,11 +623,7 @@ namespace i18n.Core.Abstractions.Domain
                 return null;
             }
             var end = lhs.LastIndexOf(quotechar, StringComparison.Ordinal);
-            if (end <= begin)
-            {
-                return null;
-            }
-            return lhs.Substring(begin + 1, end - begin - 1);
+            return end <= begin ? null : lhs.Substring(begin + 1, end - begin - 1);
         }
 
         static string Escape(string s)
@@ -759,9 +722,5 @@ namespace i18n.Core.Abstractions.Domain
 
             return sb.ToString();
         }
-
-        #endregion
-
-        #endregion
     }
 }

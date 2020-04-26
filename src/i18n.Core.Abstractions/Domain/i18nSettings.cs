@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using i18n.Core.Abstractions.Domain.Helpers;
 
 namespace i18n.Core.Abstractions.Domain
 {
@@ -10,42 +11,34 @@ namespace i18n.Core.Abstractions.Domain
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public sealed class I18NSettings
     {
-        readonly ISettingsProvider _settingsProvider;
-
         const string Prefix = "i18n.";
         const string AllToken = "*";
         const string OneToken = "?";
+        readonly ISettingsProvider _settingsProvider;
+
+        public string ProjectDirectory => _settingsProvider.ProjectDirectory;
 
         public I18NSettings(ISettingsProvider settingsProvider)
         {
             _settingsProvider = settingsProvider;
         }
 
-        public string ProjectDirectory => _settingsProvider.ProjectDirectory;
-
         static string GetPrefixedString(string key)
         {
             return Prefix + key;
         }
 
-        string MakePathAbsoluteAndFromConfigFile(string path)
+        string BuildAbsolutePathFromProjectDirectory(string path)
         {
-            if (Path.IsPathRooted(path))
-            {
-                return path;
-            }
-
-            var startPath = Path.GetDirectoryName(_settingsProvider.ProjectDirectory);
-            return Path.GetFullPath(Path.Combine(startPath ?? throw new InvalidOperationException(), path));
+            return Path.IsPathRooted(path) ? path : Path.GetFullPath(Path.Combine(_settingsProvider.ProjectDirectory ?? throw new InvalidOperationException(), path));
         }
 
-
         /// <summary>
-        /// Determines whether the specified path has a windows wildcard character (* or ?)
+        ///     Determines whether the specified path has a windows wildcard character (* or ?)
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>
-        ///   <c>true</c> if the specified path has a wildcard otherwise, <c>false</c>.
+        ///     <c>true</c> if the specified path has a wildcard otherwise, <c>false</c>.
         /// </returns>
         static bool HasSearchCharacter(string path)
         {
@@ -53,8 +46,8 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         /// <summary>
-        /// Find all the existing physical paths that corresponds to the specified path.
-        /// Returns a single value if there are no wildcards in the specified path.
+        ///     Find all the existing physical paths that corresponds to the specified path.
+        ///     Returns a single value if there are no wildcards in the specified path.
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>An enumeration of corresponding paths</returns>
@@ -70,28 +63,27 @@ namespace i18n.Core.Abstractions.Domain
             {
                 paths.Add(path);
             }
+
             return paths;
         }
 
         /// <summary>
-        /// Recursively gets the path by moving through a directory tree (parts).
+        ///     Recursively gets the path by moving through a directory tree (parts).
         /// </summary>
         /// <param name="parts">The path parts to process.</param>
         /// <param name="root">The root path from where to start.</param>
         /// <returns>A list of existing paths</returns>
-        IEnumerable<string> GetPaths(string[] parts, string root = "")
+        IEnumerable<string> GetPaths(IReadOnlyList<string> parts, string root = "")
         {
-            if (parts == null || parts.Length == 0)
+            if (parts == null || parts.Count == 0)
             {
-                if (Directory.Exists(root))
-                    return new[] { Path.GetFullPath(root) };
-                return Enumerable.Empty<string>();
+                return Directory.Exists(root) ? new[] {Path.GetFullPath(root)} : Enumerable.Empty<string>();
             }
 
             var paths = new List<string>();
             if (HasSearchCharacter(parts[0]))
             {
-                var rooted = MakePathAbsoluteAndFromConfigFile(root);
+                var rooted = BuildAbsolutePathFromProjectDirectory(root);
                 var list = Directory.GetDirectories(rooted, parts[0]);
                 foreach (var path in list)
                 {
@@ -106,9 +98,8 @@ namespace i18n.Core.Abstractions.Domain
             return paths;
         }
 
-        #region Locale directory
-
         const string _localeDirectoryDefault = "locale";
+
         public string LocaleDirectory
         {
             get
@@ -117,7 +108,7 @@ namespace i18n.Core.Abstractions.Domain
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var path = setting ?? _localeDirectoryDefault;
 
-                return MakePathAbsoluteAndFromConfigFile(path);
+                return BuildAbsolutePathFromProjectDirectory(path);
             }
             set
             {
@@ -126,18 +117,15 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-
-        #region Locale filename
-
         const string _localeFilenameDefault = "messages";
+
         public string LocaleFilename
         {
             get
             {
                 var prefixedString = GetPrefixedString("LocaleFilename");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                return Helpers.Extensions.IsSet(setting) ? setting : _localeFilenameDefault;
+                return setting.IsSet() ? setting : _localeFilenameDefault;
             }
             set
             {
@@ -147,13 +135,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string _localeOtherFilesDefault = "";
+
         public IEnumerable<string> LocaleOtherFiles
         {
             get
             {
                 var prefixedString = GetPrefixedString("LocaleOtherFiles");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (!Helpers.Extensions.IsSet(setting))
+                if (!setting.IsSet())
                 {
                     setting = _localeOtherFilesDefault;
                 }
@@ -167,22 +156,18 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-
-        #region White list
-
         const string _whiteListDefault = "*.cs;*.cshtml";
-        
+
         /// <summary>
-        /// Describes zero or more file specifications which in turn specify
-        /// the source files to be targeted by FileNuggetParser.
+        ///     Describes zero or more file specifications which in turn specify
+        ///     the source files to be targeted by FileNuggetParser.
         /// </summary>
         /// <remarks>
-        /// Each element in the list may be a full file name e.g. "myfile.js",
-        /// or a file extension e.g. "*.js".<br/>
-        /// When the list is stored in the config file as a string, each element is delimited by
-        /// a semi colon character.<br/>
-        /// Defaults to "*.cs;*.cshtml".
+        ///     Each element in the list may be a full file name e.g. "myfile.js",
+        ///     or a file extension e.g. "*.js".<br />
+        ///     When the list is stored in the config file as a string, each element is delimited by
+        ///     a semi colon character.<br />
+        ///     Defaults to "*.cs;*.cshtml".
         /// </remarks>
         public IEnumerable<string> WhiteList
         {
@@ -195,9 +180,10 @@ namespace i18n.Core.Abstractions.Domain
                     return setting.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                 }
 
-                return Helpers.Extensions.IsSet(_whiteListDefault) ? 
-                    _whiteListDefault.Split(';')
-                        .Where(x => !string.IsNullOrWhiteSpace(x)).ToList() : new List<string>();
+                return _whiteListDefault.IsSet()
+                    ? _whiteListDefault.Split(';')
+                        .Where(x => !string.IsNullOrWhiteSpace(x)).ToList()
+                    : new List<string>();
             }
             set
             {
@@ -206,32 +192,23 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-
-        #region Black list
-
         const string _blackListDefault = "";
-        IList<string> _cached_blackList;
 
         /// <summary>
-        /// Describes zero or more source directory/folder paths to be ignored during nugget parsing
-        /// e.g. by FileNuggetParser.
+        ///     Describes zero or more source directory/folder paths to be ignored during nugget parsing
+        ///     e.g. by FileNuggetParser.
         /// </summary>
         /// <remarks>
-        /// Each element in the list may be either an absolute (rooted) or relative path.
-        /// When the list is stored in the config file as a string, each element is delimited by
-        /// a semi colon character.<br/>
-        /// Default value is empty list.<br/>
+        ///     Each element in the list may be either an absolute (rooted) or relative path.
+        ///     When the list is stored in the config file as a string, each element is delimited by
+        ///     a semi colon character.<br />
+        ///     Default value is empty list.<br />
         /// </remarks>
         public IEnumerable<string> BlackList
         {
             get
             {
-                if(_cached_blackList != null)
-                {
-                    return _cached_blackList;
-                }
-                _cached_blackList = new List<string>();
+                var blackList = new List<string>();
                 var prefixedString = GetPrefixedString("BlackList");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 //If we find any wildcard in the setting, we replace it by the exitsing physical paths
@@ -240,26 +217,24 @@ namespace i18n.Core.Abstractions.Domain
                     IEnumerable<string> preblacklist = setting.Split(';');
                     setting = string.Join(";", preblacklist.SelectMany(FindPaths));
                 }
+
                 List<string> list;
                 if (setting != null)
                 {
                     list = setting.Split(';').ToList();
                 }
-                else if (Helpers.Extensions.IsSet(_blackListDefault))
+                else if (_blackListDefault.IsSet())
                 {
                     list = _blackListDefault.Split(';').ToList();
                 }
                 else
                 {
-                    return _cached_blackList;
+                    return blackList;
                 }
 
-                foreach (var path in list.Where(x => !string.IsNullOrWhiteSpace(x)))
-                {
-                    _cached_blackList.Add(MakePathAbsoluteAndFromConfigFile(path));
-                }
+                blackList.AddRange(list.Where(x => !string.IsNullOrWhiteSpace(x)).Select(BuildAbsolutePathFromProjectDirectory));
 
-                return _cached_blackList;
+                return blackList;
             }
             set
             {
@@ -268,23 +243,15 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-
-        #region Nugget tokens
-
         const string _nuggetBeginTokenDefault = "[[[";
+
         public string NuggetBeginToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetBeginToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-
-                return _nuggetBeginTokenDefault;
+                return setting ?? _nuggetBeginTokenDefault;
             }
             set
             {
@@ -294,19 +261,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string _nuggetEndTokenDefault = "]]]";
+
         public string NuggetEndToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetEndToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-
-                return _nuggetEndTokenDefault;
-
+                return setting ?? _nuggetEndTokenDefault;
             }
             set
             {
@@ -316,19 +278,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string _nuggetDelimiterTokenDefault = "|||";
+
         public string NuggetDelimiterToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetDelimiterToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-
-                return _nuggetDelimiterTokenDefault;
-
+                return setting ?? _nuggetDelimiterTokenDefault;
             }
             set
             {
@@ -338,19 +295,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string _nuggetCommentTokenDefault = "///";
+
         public string NuggetCommentToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetCommentToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-
-                return _nuggetCommentTokenDefault;
-
+                return setting ?? _nuggetCommentTokenDefault;
             }
             set
             {
@@ -360,17 +312,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string NuggetParameterBeginTokenDefault = "(((";
+
         public string NuggetParameterBeginToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetParameterBeginToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-                return NuggetParameterBeginTokenDefault;
+                return setting ?? NuggetParameterBeginTokenDefault;
             }
             set
             {
@@ -380,17 +329,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string NuggetParameterEndTokenDefault = ")))";
+
         public string NuggetParameterEndToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetParameterEndToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-                return NuggetParameterEndTokenDefault;
+                return setting ?? NuggetParameterEndTokenDefault;
             }
             set
             {
@@ -400,17 +346,14 @@ namespace i18n.Core.Abstractions.Domain
         }
 
         const string NuggetVisualizeTokenDefault = "!";
+
         public string NuggetVisualizeToken
         {
             get
             {
                 var prefixedString = GetPrefixedString("NuggetVisualizeToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-                return NuggetVisualizeTokenDefault;
+                return setting ?? NuggetVisualizeTokenDefault;
             }
             set
             {
@@ -425,11 +368,7 @@ namespace i18n.Core.Abstractions.Domain
             {
                 var prefixedString = GetPrefixedString("NuggetVisualizeEndToken");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-                return string.Empty;
+                return setting ?? string.Empty;
             }
             set
             {
@@ -438,26 +377,12 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-        
-        #region DirectoriesToScan
-
         const string _directoriesToScan = ".";
 
         /// <summary>
-        /// A semi-colon-delimited string that specifies one or more paths to the 
-        /// root directory/folder of the branches which FileNuggetParser is to scan for source files.
+        ///     A semi-colon-delimited string that specifies one or more paths to the
+        ///     root directory/folder of the branches which FileNuggetParser is to scan for source files.
         /// </summary>
-        /// <remarks>
-        /// Each string may be an absolute (rooted) path, or a path
-        /// relative to the folder containing the current config file
-        /// (<see cref="AbstractSettingService.GetConfigFileLocation"/>).<br/>
-        /// Default value is "." which equates to the the single folder containing the 
-        /// current config file (<see cref="AbstractSettingService.GetConfigFileLocation"/>).<br/>
-        /// Typically, you may set to ".." equating to the solution folder for the
-        /// project containing the current config file.<br/>
-        /// An example of a multi-path string is "c:\mywebsite;c:\mylibs\asp.net".
-        /// </remarks>
         public IEnumerable<string> DirectoriesToScan
         {
             get
@@ -465,7 +390,7 @@ namespace i18n.Core.Abstractions.Domain
                 var prefixedString = GetPrefixedString("DirectoriesToScan");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var list = setting != null ? setting.Split(';').ToList() : _directoriesToScan.Split(';').ToList();
-                return list.Where(x => !string.IsNullOrWhiteSpace(x)).Select(MakePathAbsoluteAndFromConfigFile).ToList();
+                return list.Where(x => !string.IsNullOrWhiteSpace(x)).Select(BuildAbsolutePathFromProjectDirectory).ToList();
             }
             set
             {
@@ -474,13 +399,10 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-        
-        #region Available Languages
-
         //If empty string is returned the repository can if it choses enumerate languages in a different way (like enumerating directories in the case of PO files)
         //empty string is returned as an IEnumerable with one empty element
         const string _availableLanguages = "";
+
         public IEnumerable<string> AvailableLanguages
         {
             get
@@ -501,61 +423,36 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
 
-        #region MessageContextEnabledFromComment
-
-        bool? _cached_MessageContextEnabledFromComment;
         public bool MessageContextEnabledFromComment
         {
             get
             {
-                // NB: this is not particularly thread-safe, but not seen as dangerous
-                // if done concurrently as modification is one-way.
-                if (_cached_MessageContextEnabledFromComment != null) {
-                    return _cached_MessageContextEnabledFromComment.Value; }
-
                 var prefixedString = GetPrefixedString("MessageContextEnabledFromComment");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                var result = !string.IsNullOrEmpty(setting) &&  setting == "true";
-                _cached_MessageContextEnabledFromComment = result;
+                var result = !string.IsNullOrEmpty(setting) && setting == "true";
                 return result;
             }
             set
             {
                 var prefixedString = GetPrefixedString("MessageContextEnabledFromComment");
                 _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
-                _cached_MessageContextEnabledFromComment = value;
             }
         }
 
-        #endregion
-
-        #region VisualizeMessages
-
-        bool? _cached_visualizeMessages;
         public bool VisualizeMessages
         {
             get
             {
-                // NB: this is not particularly thread-safe, but not seen as dangerous
-                // if done concurrently as modification is one-way.
-                if (_cached_visualizeMessages != null)
-                {
-                    return _cached_visualizeMessages.Value;
-                }
-
                 var prefixedString = GetPrefixedString("VisualizeMessages");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var result = !string.IsNullOrEmpty(setting) && setting == "true";
-                _cached_visualizeMessages = result;
-                return _cached_visualizeMessages.Value;
+                return result;
             }
             set
             {
                 var prefixedString = GetPrefixedString("VisualizeMessages");
                 _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
-                _cached_visualizeMessages = value;
             }
         }
 
@@ -565,11 +462,7 @@ namespace i18n.Core.Abstractions.Domain
             {
                 var prefixedString = GetPrefixedString("VisualizeLanguageSeparator");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (setting != null)
-                {
-                    return setting;
-                }
-                return string.Empty;
+                return setting ?? string.Empty;
             }
             set
             {
@@ -578,64 +471,36 @@ namespace i18n.Core.Abstractions.Domain
             }
         }
 
-        #endregion
-
-        #region DisableReferences
-
-        bool? _cached_disableReferences;
-
         public bool DisableReferences
         {
             get
             {
-                if (_cached_disableReferences != null)
-                {
-                    return _cached_disableReferences.Value;
-                }
-
                 var prefixedString = GetPrefixedString("DisableReferences");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var result = !string.IsNullOrEmpty(setting) && setting == "true";
-                _cached_disableReferences = result;
-                return _cached_disableReferences.Value;
+                return result;
             }
             set
             {
                 var prefixedString = GetPrefixedString("DisableReferences");
                 _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
-                _cached_disableReferences = value;
             }
         }
-        #endregion
 
-        #region GenerateTemplatePerFile
-
-        bool? _cached_generateTemplatePerFile;
         public bool GenerateTemplatePerFile
         {
             get
-            {
-                // NB: this is not particularly thread-safe, but not seen as dangerous
-                // if done concurrently as modification is one-way.
-                if (_cached_generateTemplatePerFile != null)
-                {
-                    return _cached_generateTemplatePerFile.Value;
-                }
-
+            { 
                 var prefixedString = GetPrefixedString("GenerateTemplatePerFile");
                 var setting = _settingsProvider.GetSetting(prefixedString);
                 var result = !string.IsNullOrEmpty(setting) && setting == "true";
-                _cached_generateTemplatePerFile = result;
-                return _cached_generateTemplatePerFile.Value;
+                return result;
             }
             set
             {
                 var prefixedString = GetPrefixedString("GenerateTemplatePerFile");
                 _settingsProvider.SetSetting(prefixedString, value ? "true" : "false");
-                _cached_generateTemplatePerFile = value;
             }
         }
-
-        #endregion
     }
 }

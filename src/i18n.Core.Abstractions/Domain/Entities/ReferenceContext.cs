@@ -27,7 +27,10 @@ namespace i18n.Core.Abstractions.Domain.Entities
                     lineStartPosition = i;
                 }
 
-                if (i < position) continue;
+                if (i < position)
+                {
+                    continue;
+                }
 
                 var lineEndPosition = content.IndexOf("\n", i, StringComparison.Ordinal);
 

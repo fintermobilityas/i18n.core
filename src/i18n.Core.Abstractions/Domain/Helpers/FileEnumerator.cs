@@ -13,7 +13,9 @@ namespace i18n.Core.Abstractions.Domain.Helpers
         {
             _blackList = blackList;
             foreach (var str in blackList)
+            {
                 DebugHelpers.WriteLine(str);
+            }
         }
 
         public IEnumerable<string> GetFiles(string path)
@@ -28,7 +30,9 @@ namespace i18n.Core.Abstractions.Domain.Helpers
                     foreach (var path1 in Directory.EnumerateDirectories(path))
                     {
                         if (!IsBlackListed(path1))
+                        {
                             queue.Enqueue(path1);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -54,7 +58,9 @@ namespace i18n.Core.Abstractions.Domain.Helpers
                 foreach (var path1 in files)
                 {
                     if (!IsBlackListed(path1))
+                    {
                         yield return path1;
+                    }
                 }
             }
         }

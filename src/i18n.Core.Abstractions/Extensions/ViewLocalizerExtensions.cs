@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Localization;
 
 namespace i18n.Core.Abstractions.Extensions
@@ -6,6 +7,7 @@ namespace i18n.Core.Abstractions.Extensions
     /// <summary>
     /// Provides extension methods for <see cref="IViewLocalizer"/>.
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public static class ViewLocalizerExtensions
     {
         /// <summary>

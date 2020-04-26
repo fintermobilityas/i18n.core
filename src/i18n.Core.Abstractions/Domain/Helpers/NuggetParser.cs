@@ -31,10 +31,10 @@ namespace i18n.Core.Abstractions.Domain.Helpers
             string delimiterToken,
             string commentToken)
         {
-            if (!StringExtensions.IsSet(beginToken)) { throw new ArgumentNullException(nameof(beginToken)); }
-            if (!StringExtensions.IsSet(endToken)) { throw new ArgumentNullException(nameof(endToken)); }
-            if (!StringExtensions.IsSet(delimiterToken)) { throw new ArgumentNullException(nameof(delimiterToken)); }
-            if (!StringExtensions.IsSet(commentToken)) { throw new ArgumentNullException(nameof(commentToken)); }
+            if (!beginToken.IsSet()) { throw new ArgumentNullException(nameof(beginToken)); }
+            if (!endToken.IsSet()) { throw new ArgumentNullException(nameof(endToken)); }
+            if (!delimiterToken.IsSet()) { throw new ArgumentNullException(nameof(delimiterToken)); }
+            if (!commentToken.IsSet()) { throw new ArgumentNullException(nameof(commentToken)); }
 
             BeginToken = beginToken;
             EndToken = endToken;
@@ -251,7 +251,7 @@ namespace i18n.Core.Abstractions.Domain.Helpers
                 foreach (Capture capture in formatItems)
                 {
                     if (_mContext == Context.SourceProcessing
-                        && !StringExtensions.IsSet(capture.Value))
+                        && !capture.Value.IsSet())
                     {
                         return null;
                     } // bad format
@@ -259,7 +259,7 @@ namespace i18n.Core.Abstractions.Domain.Helpers
                 }
             }
             // Extract comment from 4th capture group.
-            if (StringExtensions.IsSet(match.Groups[3].Value))
+            if (match.Groups[3].Value.IsSet())
             {
                 n.Comment = match.Groups[3].Value;
             }

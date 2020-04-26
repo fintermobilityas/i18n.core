@@ -140,7 +140,7 @@ namespace i18n.Core.Abstractions.Domain
                     };
 
 
-                    if (!Helpers.Extensions.IsSet(nugget.Comment))
+                    if (!nugget.Comment.IsSet())
                     {
                         return item;
                     }
@@ -162,7 +162,7 @@ namespace i18n.Core.Abstractions.Domain
                         v.References = newReferences;
                     }
 
-                    if (!Helpers.Extensions.IsSet(nugget.Comment))
+                    if (!nugget.Comment.IsSet())
                     {
                         return v;
                     }

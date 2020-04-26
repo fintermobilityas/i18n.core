@@ -27,7 +27,10 @@ namespace i18n.Core.Abstractions.Domain
 
         static Dictionary<string, string> Parse(string webConfigFilename)
         {
-            if (webConfigFilename == null) throw new ArgumentNullException(nameof(webConfigFilename));
+            if (webConfigFilename == null)
+            {
+                throw new ArgumentNullException(nameof(webConfigFilename));
+            }
 
             var stream = File.OpenRead(webConfigFilename);
             using var xmlReader = new XmlTextReader(stream);
@@ -37,7 +40,11 @@ namespace i18n.Core.Abstractions.Domain
             var appSettingsDict = new Dictionary<string, string>();
             foreach (XmlNode node in xmlDocument.SelectSingleNode("/configuration/appSettings").ChildNodes)
             {
-                if (node.Name != "add") continue;
+                if (node.Name != "add")
+                {
+                    continue;
+                }
+
                 var key = node.Attributes["key"].Value;
                 if (key == null || !key.StartsWith("i18n."))
                 {

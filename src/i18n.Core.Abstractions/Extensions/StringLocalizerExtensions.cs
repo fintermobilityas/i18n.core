@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Localization;
 
 namespace i18n.Core.Abstractions.Extensions
@@ -6,6 +7,7 @@ namespace i18n.Core.Abstractions.Extensions
     /// <summary>
     /// Provides extension methods for <see cref="IStringLocalizer"/>.
     /// </summary>
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public static class StringLocalizerExtensions
     {
         /// <summary>

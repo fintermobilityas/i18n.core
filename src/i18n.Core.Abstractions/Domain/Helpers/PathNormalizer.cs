@@ -11,10 +11,14 @@ namespace i18n.Core.Abstractions.Domain.Helpers
         public static string MakeRelativePath(string anchorPath, string path)
         {
             if (path == null)
+            {
                 throw new ArgumentNullException(nameof(path));
+            }
 
             if (string.IsNullOrEmpty(anchorPath))
+            {
                 return path;
+            }
 
             if (path.StartsWith(anchorPath, StringComparison.OrdinalIgnoreCase))
             {
@@ -27,7 +31,9 @@ namespace i18n.Core.Abstractions.Domain.Helpers
             var firstUniqueComponentIndex = FirstUniqueComponentIndex(anchorComponents, pathComponents);
 
             if (firstUniqueComponentIndex == 0)
+            {
                 return path;
+            }
 
             var pathBuilder = new StringBuilder();
 
@@ -45,7 +51,9 @@ namespace i18n.Core.Abstractions.Domain.Helpers
                 pathBuilder.Append(pathComponents[i]);
 
                 if (i < pathComponents.Length - 1)
+                {
                     pathBuilder.Append(Path.DirectorySeparatorChar);
+                }
             }
 
             return pathBuilder.ToString();
@@ -57,10 +65,14 @@ namespace i18n.Core.Abstractions.Domain.Helpers
             foreach (var s in anchorComponents)
             {
                 if (index >= pathComponents.Length)
+                {
                     return 0;
+                }
 
                 if (s != pathComponents[index])
+                {
                     return index;
+                }
 
                 ++index;
             }
