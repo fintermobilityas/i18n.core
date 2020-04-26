@@ -7,7 +7,7 @@ using i18n.Core.Abstractions.Domain;
 using i18n.Core.Abstractions.Domain.Entities;
 using JetBrains.Annotations;
 
-namespace i18n.Core.PostBuild
+namespace pot
 {
     [UsedImplicitly]
     internal class Options
@@ -78,7 +78,7 @@ namespace i18n.Core.PostBuild
 
             sw.Stop();
 
-            Console.WriteLine($"i18n.PostBuild completed successfully. Operation completed in {sw.Elapsed.TotalSeconds:F} seconds.");
+            Console.WriteLine($"po completed successfully. Operation completed in {sw.Elapsed.TotalSeconds:F} seconds.");
         }
     }
 }

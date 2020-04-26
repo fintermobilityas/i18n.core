@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "i18n.Core", "src\i18n.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "i18n.Core.Abstractions", "src\i18n.Core.Abstractions\i18n.Core.Abstractions.csproj", "{134F882C-68C7-465F-A72D-67950E05DC69}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "i18n.Core.PostBuild", "src\i18n.Core.PostBuild\i18n.Core.PostBuild.csproj", "{713A6434-DEC2-45F9-8D7B-3FAF145577F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pot", "src\pot\pot.csproj", "{713A6434-DEC2-45F9-8D7B-3FAF145577F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
