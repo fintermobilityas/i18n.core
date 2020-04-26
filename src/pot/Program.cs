@@ -32,7 +32,7 @@ namespace pot
                 {
                     try
                     {
-                        Run(options);
+                        Environment.ExitCode = Run(options);
                     }
                     catch (Exception exception)
                     {
@@ -50,7 +50,7 @@ namespace pot
                 });
         }
 
-        static void Run(Options options)
+        static int Run(Options options)
         {
             ReferenceContext.ShowSourceContext = options.ShowSourceContext;
 
@@ -82,6 +82,8 @@ namespace pot
             sw.Stop();
 
             Console.WriteLine($"Operation completed in {sw.Elapsed.TotalSeconds:F} seconds.");
+
+            return 0;
         }
     }
 }
