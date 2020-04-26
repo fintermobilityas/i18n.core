@@ -22,7 +22,7 @@ namespace i18n.Core.Abstractions.Domain
         public SettingsProvider(string webConfigFilename)
         {
             ProjectDirectory = Path.GetDirectoryName(webConfigFilename);
-            _settings = Parse(webConfigFilename);
+            _settings = !File.Exists(webConfigFilename) ? new Dictionary<string, string>() : Parse(webConfigFilename);
         }
 
         static Dictionary<string, string> Parse(string webConfigFilename)

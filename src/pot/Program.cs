@@ -55,11 +55,6 @@ namespace pot
             ReferenceContext.ShowSourceContext = options.ShowSourceContext;
 
             var webConfigFilename = options.WebConfigPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Web.config");
-            if (!File.Exists(webConfigFilename))
-            {
-                Console.Error.WriteLine($"Unable to find web.config: {webConfigFilename}");
-                return;
-            }
 
             var sw = new Stopwatch();
             sw.Restart();
