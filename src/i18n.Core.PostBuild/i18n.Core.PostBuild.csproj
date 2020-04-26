@@ -13,4 +13,7 @@
     <PackageReference Include="CommandLineParser" Version="2.7.82" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\i18n.Core.Abstractions\i18n.Core.Abstractions.csproj" />
+  </ItemGroup>
 </Project>

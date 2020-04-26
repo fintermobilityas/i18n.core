@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace i18n.Core.PostBuild.Helpers
+namespace i18n.Core.Abstractions.Domain.Helpers
 {
     internal static class DebugHelpers
     {

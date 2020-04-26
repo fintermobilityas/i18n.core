@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace i18n.Core.PostBuild.Entities
+namespace i18n.Core.Abstractions.Domain.Entities
 {
     /// <summary>
     /// Holds a complete translation in any one language. The template (TemplateItems) will have told the language which id's/strings that needs translation.

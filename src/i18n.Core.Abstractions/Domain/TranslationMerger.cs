@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using i18n.Core.PostBuild.Concrete.Abstract;
-using i18n.Core.PostBuild.Entities;
+using i18n.Core.Abstractions.Domain.Abstract;
+using i18n.Core.Abstractions.Domain.Entities;
 
-namespace i18n.Core.PostBuild.Concrete
+namespace i18n.Core.Abstractions.Domain
 {
     public interface ITranslationMerger
     {

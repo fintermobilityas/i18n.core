@@ -3,11 +3,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using i18n.Core.PostBuild.Concrete.Abstract;
-using i18n.Core.PostBuild.Entities;
-using i18n.Core.PostBuild.Helpers;
+using i18n.Core.Abstractions.Domain.Abstract;
+using i18n.Core.Abstractions.Domain.Entities;
+using i18n.Core.Abstractions.Domain.Helpers;
 
-namespace i18n.Core.PostBuild.Concrete
+namespace i18n.Core.Abstractions.Domain
 {
     public class FileNuggetFinder : INuggetFinder
     {
@@ -140,7 +140,7 @@ namespace i18n.Core.PostBuild.Concrete
                     };
 
 
-                    if (!Extensions.IsSet(nugget.Comment))
+                    if (!Helpers.Extensions.IsSet(nugget.Comment))
                     {
                         return item;
                     }
@@ -162,7 +162,7 @@ namespace i18n.Core.PostBuild.Concrete
                         v.References = newReferences;
                     }
 
-                    if (!Extensions.IsSet(nugget.Comment))
+                    if (!Helpers.Extensions.IsSet(nugget.Comment))
                     {
                         return v;
                     }

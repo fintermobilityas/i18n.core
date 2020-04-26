@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using i18n.Core.PostBuild.Helpers;
 
-namespace i18n.Core.PostBuild.Concrete
+namespace i18n.Core.Abstractions.Domain
 {
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -138,7 +137,7 @@ namespace i18n.Core.PostBuild.Concrete
             {
                 var prefixedString = GetPrefixedString("LocaleFilename");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                return Extensions.IsSet(setting) ? setting : _localeFilenameDefault;
+                return Helpers.Extensions.IsSet(setting) ? setting : _localeFilenameDefault;
             }
             set
             {
@@ -154,7 +153,7 @@ namespace i18n.Core.PostBuild.Concrete
             {
                 var prefixedString = GetPrefixedString("LocaleOtherFiles");
                 var setting = _settingsProvider.GetSetting(prefixedString);
-                if (!Extensions.IsSet(setting))
+                if (!Helpers.Extensions.IsSet(setting))
                 {
                     setting = _localeOtherFilesDefault;
                 }
@@ -196,7 +195,7 @@ namespace i18n.Core.PostBuild.Concrete
                     return setting.Split(';').Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
                 }
 
-                return Extensions.IsSet(_whiteListDefault) ? 
+                return Helpers.Extensions.IsSet(_whiteListDefault) ? 
                     _whiteListDefault.Split(';')
                         .Where(x => !string.IsNullOrWhiteSpace(x)).ToList() : new List<string>();
             }
@@ -246,7 +245,7 @@ namespace i18n.Core.PostBuild.Concrete
                 {
                     list = setting.Split(';').ToList();
                 }
-                else if (Extensions.IsSet(_blackListDefault))
+                else if (Helpers.Extensions.IsSet(_blackListDefault))
                 {
                     list = _blackListDefault.Split(';').ToList();
                 }

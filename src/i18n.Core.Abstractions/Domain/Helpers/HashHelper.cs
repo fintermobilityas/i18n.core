@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace i18n.Core.PostBuild.Helpers
+namespace i18n.Core.Abstractions.Domain.Helpers
 {
     /// <summary>
     /// Helpers for implementing Object.GetHashCode().
@@ -44,7 +44,7 @@ namespace i18n.Core.PostBuild.Helpers
             return arg switch
             {
                 null => 0,
-                IEnumerable<object> collection => collection.Aggregate(0, (current, item) => current.CombineHashCode(item)),
+                IEnumerable<object> collection => collection.Aggregate(0, (current, item) => CombineHashCode<object>(current, item)),
                 _ => arg.GetHashCode()
             };
         }

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using i18n.Core.PostBuild.Entities;
+using i18n.Core.Abstractions.Domain.Entities;
 
-namespace i18n.Core.PostBuild.Concrete.Abstract
+namespace i18n.Core.Abstractions.Domain.Abstract
 {
     /// <summary>
     /// For managing a translation repository for reading, writing and searching. As long as you implement this you can store your translation wherever you want. Db/ po files/xml

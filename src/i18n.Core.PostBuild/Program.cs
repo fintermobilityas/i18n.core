@@ -3,8 +3,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using CommandLine;
-using i18n.Core.PostBuild.Concrete;
-using i18n.Core.PostBuild.Entities;
+using i18n.Core.Abstractions.Domain;
+using i18n.Core.Abstractions.Domain.Entities;
 using JetBrains.Annotations;
 
 namespace i18n.Core.PostBuild

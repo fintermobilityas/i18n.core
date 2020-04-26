@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using i18n.Core.PostBuild.Concrete.Abstract;
-using i18n.Core.PostBuild.Helpers;
+using i18n.Core.Abstractions.Domain.Abstract;
+using i18n.Core.Abstractions.Domain.Helpers;
 
-namespace i18n.Core.PostBuild.Concrete
+namespace i18n.Core.Abstractions.Domain
 {
     /// <summary>
     /// Helper class for parsing and manipulating language tags.
@@ -205,15 +205,15 @@ namespace i18n.Core.PostBuild.Concrete
             //   l-r     -> l
             //   l-s     -> l
             //   l       -> no parent
-            if (Extensions.IsSet(Region) && Extensions.IsSet(Script) && Extensions.IsSet(PrivateUse))
+            if (Helpers.Extensions.IsSet(Region) && Helpers.Extensions.IsSet(Script) && Helpers.Extensions.IsSet(PrivateUse))
             {
                 m_parent = GetCachedInstance($"{Language}-{Script}-{Region}");
             }
-            else if (Extensions.IsSet(Region) && Extensions.IsSet(Script))
+            else if (Helpers.Extensions.IsSet(Region) && Helpers.Extensions.IsSet(Script))
             {
                 m_parent = GetCachedInstance($"{Language}-{Script}");
             }
-            else if (Extensions.IsSet(Script) || Extensions.IsSet(Region))
+            else if (Helpers.Extensions.IsSet(Script) || Helpers.Extensions.IsSet(Region))
             {
                 m_parent = GetCachedInstance(Language);
             }
@@ -226,7 +226,7 @@ namespace i18n.Core.PostBuild.Concrete
             //
             try
             {
-                if (Extensions.IsSet(PrivateUse))
+                if (Helpers.Extensions.IsSet(PrivateUse))
                 {   // Strip out the private use subtag to allow CultureInfo to be set, based on the rest of the language tag
                     CultureInfo = new CultureInfo(langtag.Replace("-x-" + PrivateUse, string.Empty));
                 }
@@ -264,7 +264,7 @@ namespace i18n.Core.PostBuild.Concrete
         /// <seealso href="http://www.microsoft.com/resources/msdn/goglobal/default.mspx"/>
         public static LanguageTag GetCachedInstance(string langtag)
         {
-            if (!Extensions.IsSet(langtag))
+            if (!Helpers.Extensions.IsSet(langtag))
             {
                 return null;
             }
@@ -319,7 +319,7 @@ namespace i18n.Core.PostBuild.Concrete
         /// </returns>
         public override string ToString()
         {
-            return Extensions.IsSet(m_langtag) ? m_langtag : "";
+            return Helpers.Extensions.IsSet(m_langtag) ? m_langtag : "";
         }
         public override bool Equals(object obj)
         {
@@ -435,15 +435,15 @@ namespace i18n.Core.PostBuild.Concrete
         {
             if (i_rhs == null) { throw new ArgumentNullException(nameof(i_rhs)); }
             // Either langtag being null fails the match.
-            if (!Extensions.IsSet(Language) || !Extensions.IsSet(i_rhs.Language))
+            if (!Helpers.Extensions.IsSet(Language) || !Helpers.Extensions.IsSet(i_rhs.Language))
             {
                 return 0;
             }
             // Init.
-            bool[] L = { 0 == string.Compare(Language, i_rhs.Language, true), Extensions.IsSet(Language), Extensions.IsSet(i_rhs.Language) };
-            bool[] S = { 0 == string.Compare(Script, i_rhs.Script, true), Extensions.IsSet(Script), Extensions.IsSet(i_rhs.Script) };
-            bool[] R = { 0 == string.Compare(Region, i_rhs.Region, true), Extensions.IsSet(Region), Extensions.IsSet(i_rhs.Region) };
-            bool[] P = { 0 == string.Compare(PrivateUse, i_rhs.PrivateUse, true), Extensions.IsSet(PrivateUse), Extensions.IsSet(i_rhs.PrivateUse) };
+            bool[] L = { 0 == string.Compare(Language, i_rhs.Language, true), Helpers.Extensions.IsSet(Language), Helpers.Extensions.IsSet(i_rhs.Language) };
+            bool[] S = { 0 == string.Compare(Script, i_rhs.Script, true), Helpers.Extensions.IsSet(Script), Helpers.Extensions.IsSet(i_rhs.Script) };
+            bool[] R = { 0 == string.Compare(Region, i_rhs.Region, true), Helpers.Extensions.IsSet(Region), Helpers.Extensions.IsSet(i_rhs.Region) };
+            bool[] P = { 0 == string.Compare(PrivateUse, i_rhs.PrivateUse, true), Helpers.Extensions.IsSet(PrivateUse), Helpers.Extensions.IsSet(i_rhs.PrivateUse) };
             // Language incorporates Language + PrivateUse subtags for our logic here.
             L[0] = L[0] && P[0];
             L[1] = L[1] || P[1];

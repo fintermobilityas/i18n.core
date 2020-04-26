@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace i18n.Core.PostBuild.Helpers
+namespace i18n.Core.Abstractions.Domain.Helpers
 {
     /// <summary>
     /// Describes a valid set of string tokens that define the format of a Nugget.

@@ -6,11 +6,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using i18n.Core.PostBuild.Concrete.Abstract;
-using i18n.Core.PostBuild.Entities;
-using i18n.Core.PostBuild.Helpers;
+using i18n.Core.Abstractions.Domain.Abstract;
+using i18n.Core.Abstractions.Domain.Entities;
+using i18n.Core.Abstractions.Domain.Helpers;
 
-namespace i18n.Core.PostBuild.Concrete
+namespace i18n.Core.Abstractions.Domain
 {
     public class PoTranslationRepository : ITranslationRepository
     {
@@ -366,7 +366,7 @@ namespace i18n.Core.PostBuild.Concrete
 
         string GetPathForLanguage(string langtag, string filename = null)
         {
-            if (!Extensions.IsSet(filename))
+            if (!Helpers.Extensions.IsSet(filename))
                 filename = _settings.LocaleFilename;
             return Path.Combine(GetAbsoluteLocaleDir(), langtag, filename + ".po");
         }
@@ -397,7 +397,7 @@ namespace i18n.Core.PostBuild.Concrete
 
             foreach (var file in _settings.LocaleOtherFiles)
             {
-                if (Extensions.IsSet(file))
+                if (Helpers.Extensions.IsSet(file))
                 {
                     paths.Add(GetPathForLanguage(langtag, file));
                 }

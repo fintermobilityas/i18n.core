@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace i18n.Core.PostBuild.Helpers
+namespace i18n.Core.Abstractions.Domain.Helpers
 {
     internal static class Extensions
     {

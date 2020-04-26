@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace i18n.Core.PostBuild.Entities
+namespace i18n.Core.Abstractions.Domain.Entities
 {
     /// <summary>
     /// All the data that one translation one item can contain. Apart from Id (which is the string to translate) and Message (which is the translation) it contains some meta data. This is linked from Translation that ties many of these items together for a complete language

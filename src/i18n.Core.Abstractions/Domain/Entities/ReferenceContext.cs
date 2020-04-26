@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 
-namespace i18n.Core.PostBuild.Entities
+namespace i18n.Core.Abstractions.Domain.Entities
 {
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public sealed class ReferenceContext

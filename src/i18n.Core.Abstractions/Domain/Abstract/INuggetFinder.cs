@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using i18n.Core.PostBuild.Entities;
+using i18n.Core.Abstractions.Domain.Entities;
 
-namespace i18n.Core.PostBuild.Concrete.Abstract
+namespace i18n.Core.Abstractions.Domain.Abstract
 {
     /// <summary>
     /// For finding nuggets that needs translating. Likely implementations is FileFinder and DatabaseFinder but anything is possible.

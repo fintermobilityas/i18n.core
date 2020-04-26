@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace i18n.Core.PostBuild.Entities
+namespace i18n.Core.Abstractions.Domain.Entities
 {
     /// <summary>
     /// Template items are only used to keep track of the strings needing translation in any given project and for then updating the translations and translationItems with this data.

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace i18n.Core.PostBuild.Helpers
+namespace i18n.Core.Abstractions.Domain.Helpers
 {
     internal static class CollectionExtensions
     {

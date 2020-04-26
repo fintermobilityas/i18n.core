@@ -1,4 +1,4 @@
-﻿namespace i18n.Core.PostBuild.Entities
+﻿namespace i18n.Core.Abstractions.Domain.Entities
 {
     /// <summary>
     /// Keeps all information about a language that can be handy when listing languages.
