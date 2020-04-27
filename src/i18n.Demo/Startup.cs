@@ -40,7 +40,7 @@ namespace i18n.Demo
                 options.SupportedUICultures = supportedCultures;
                 options.RequestCultureProviders = new List<IRequestCultureProvider>
                 {
-                    new AcceptLanguageHeaderRequestCultureProvider()
+                    new CookieRequestCultureProvider()
                 };
             });
 
