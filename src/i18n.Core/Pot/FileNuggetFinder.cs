@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using i18n.Core.Abstractions.Domain;
+using i18n.Core.Helpers;
 using i18n.Core.Pot.Entities;
 using i18n.Core.Pot.Helpers;
 
@@ -94,9 +96,10 @@ namespace i18n.Core.Pot
 
             DebugHelpers.WriteLine("FileNuggetFinder.ParseFile -- {0}", filePath);
             // Lookup any/all nuggets in the file and for each add a new template item.
-            using var fs = File.OpenText(filePath);
+            using var fs = I18NUtility.Retry(() => File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read), 3);
+            using var streamReader = new StreamReader(fs);
 
-            _nuggetParser.ParseString(fs.ReadToEnd(), delegate (string nuggetString, int pos, Nugget nugget, string iEntity)
+            _nuggetParser.ParseString(streamReader.ReadToEnd(), delegate (string nuggetString, int pos, Nugget nugget, string iEntity)
             {
                 var referenceContext = _localizationOptions.DisableReferences
                     ? ReferenceContext.Create("Disabled references", iEntity, 0)

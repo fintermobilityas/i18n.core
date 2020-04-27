@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using i18n.Core.Abstractions.Domain;
+using i18n.Core.Helpers;
 using i18n.Core.Pot.Entities;
 using i18n.Core.Pot.Helpers;
 
@@ -119,23 +120,8 @@ namespace i18n.Core.Pot
             }
 
             var filePath = GetPathForLanguage(translation.LanguageInformation.LanguageShortTag);
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
-
-            if (!File.Exists(filePath))
-            {
-                var fileInfo = new FileInfo(filePath);
-                var dirInfo = new DirectoryInfo(Path.GetDirectoryName(filePath) ?? throw new InvalidOperationException());
-                if (!dirInfo.Exists)
-                {
-                    dirInfo.Create();
-                }
-                fileInfo.Create().Close();
-            }
-
-            using var stream = new StreamWriter(filePath);
+            using var fs = I18NUtility.Retry(() => File.Open(filePath, FileMode.Create, FileAccess.Write, FileShare.Write), 3);
+            using var stream = new StreamWriter(fs);
             DebugHelpers.WriteLine("Writing file: {0}", filePath);
 
             // Establish ordering of items in PO file.
@@ -360,13 +346,14 @@ namespace i18n.Core.Pot
             {
                 DebugHelpers.WriteLine("Reading file: {0}", path);
 
-                using var fs = File.OpenText(path);
+                using var fs = I18NUtility.Retry(() => File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read), 3);
+                using var streamReader = new StreamReader(fs);
 
                 // http://www.gnu.org/s/hello/manual/gettext/PO-Files.html
 
                 string line;
                 var itemStarted = false;
-                while ((line = fs.ReadLine()) != null)
+                while ((line = streamReader.ReadLine()) != null)
                 {
                     var extractedComments = new HashSet<string>();
                     var translatorComments = new HashSet<string>();
@@ -398,12 +385,12 @@ namespace i18n.Core.Pot
                                     break;
                             }
 
-                        } while ((line = fs.ReadLine()) != null && line.StartsWith("#"));
+                        } while ((line = streamReader.ReadLine()) != null && line.StartsWith("#"));
                     }
 
                     if (line != null && (itemStarted || line.StartsWith("#~")))
                     {
-                        var item = ParseBody(fs, line);
+                        var item = ParseBody(streamReader, line);
                         if (item != null)
                         {
                             //
