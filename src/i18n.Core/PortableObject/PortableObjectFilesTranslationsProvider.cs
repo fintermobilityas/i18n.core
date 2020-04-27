@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using i18n.Core.Abstractions;
-using JetBrains.Annotations;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 
 namespace i18n.Core.PortableObject
 {
@@ -15,20 +15,23 @@ namespace i18n.Core.PortableObject
     public class PortableObjectFilesTranslationsProvider : ITranslationProvider
     {
         readonly ILocalizationFileLocationProvider _poFilesLocationProvider;
+        [MaybeNull] readonly ILogger<PortableObjectFilesTranslationsProvider> _logger;
         readonly PortableObjectParser _parser;
 
         /// <summary>
         /// Creates a new instance of <see cref="PortableObjectFilesTranslationsProvider"/>.
         /// </summary>
         /// <param name="poFileLocationProvider">The <see cref="ILocalizationFileLocationProvider"/>.</param>
-        public PortableObjectFilesTranslationsProvider(ILocalizationFileLocationProvider poFileLocationProvider)
+        /// <param name="logger"></param>
+        public PortableObjectFilesTranslationsProvider(ILocalizationFileLocationProvider poFileLocationProvider, ILogger<PortableObjectFilesTranslationsProvider> logger = null)
         {
             _poFilesLocationProvider = poFileLocationProvider;
+            _logger = logger;
             _parser = new PortableObjectParser();
         }
 
         /// <inheritdocs />
-        public void LoadTranslations([NotNull] CultureInfo cultureInfo, [NotNull] CultureDictionary dictionary)
+        public void LoadTranslations([JetBrains.Annotations.NotNull] CultureInfo cultureInfo, [JetBrains.Annotations.NotNull] CultureDictionary dictionary)
         {
             if (cultureInfo == null) throw new ArgumentNullException(nameof(cultureInfo));
             if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
@@ -47,12 +50,24 @@ namespace i18n.Core.PortableObject
                 fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureInfo.Name));
             }
 
-            foreach (var fileInfo in fileInfos.Where(x => x.Exists && !x.IsDirectory))
+            foreach (var fileInfo in fileInfos)
             {
-                using var stream = fileInfo.CreateReadStream();
-                using var reader = new StreamReader(stream);
-                dictionary.MergeTranslations(_parser.Parse(reader));
-                break;
+                if (fileInfo.IsDirectory)
+                {
+                    continue;
+                }
+
+                if (fileInfo.Exists)
+                {
+                    using var stream = fileInfo.CreateReadStream();
+                    using var reader = new StreamReader(stream);
+                    dictionary.MergeTranslations(_parser.Parse(reader));
+
+                    _logger?.LogDebug($"Translations for culture found: {cultureInfo.Name}. Translations available: {dictionary.Translations.Count}. Path: {fileInfo.PhysicalPath}.");
+                    break;
+                }
+
+                _logger?.LogWarning($"Translation for culture was not found: {cultureInfo.Name}. Path: {fileInfo}.");
             }
         }
 

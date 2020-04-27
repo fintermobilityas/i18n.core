@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using i18n.Core.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 
 namespace i18n.Core.Middleware
@@ -27,11 +29,13 @@ namespace i18n.Core.Middleware
 
         readonly RequestDelegate _next;
         readonly ILocalizationManager _localizationManager;
+        readonly ILogger<I18NMiddleware> _logger;
 
-        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager)
+        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, [MaybeNull] ILogger<I18NMiddleware> logger)
         {
             _next = next;
             _localizationManager = localizationManager;
+            _logger = logger;
         }
 
         // https://dejanstojanovic.net/aspnet/2018/august/minify-aspnet-mvc-core-response-using-custom-middleware-and-pipeline/
@@ -66,6 +70,18 @@ namespace i18n.Core.Middleware
                 throw;
             }
 
+            var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
+            CultureInfo translationCultureInfo;
+            if (requestCultureFeature == null)
+            {
+                _logger.LogWarning($"{nameof(IRequestCultureFeature)} is not configured. Thread culture will be used instead.");
+                translationCultureInfo = CultureInfo.DefaultThreadCurrentCulture;
+            }
+            else
+            {
+                translationCultureInfo = requestCultureFeature.RequestCulture.Culture;
+            }
+
             if (modifyResponse)
             {
                 var contentType = context.Response.ContentType?.ToLower();
@@ -80,7 +96,11 @@ namespace i18n.Core.Middleware
                         responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
                     }
 
-                    responseBody = ReplaceNuggets(CultureInfo.CurrentCulture, responseBody);
+                    var cultureDictionary = _localizationManager.GetDictionary(translationCultureInfo);
+
+                    _logger?.LogDebug($"Request path: {context.Request.Path}. Culture name: {cultureDictionary.CultureName}. Translations: {cultureDictionary.Translations.Count}.");
+
+                    responseBody = ReplaceNuggets(cultureDictionary, responseBody);
 
                     var requestContent = new StringContent(responseBody, Encoding.UTF8, contentType);
                     context.Response.Body = await requestContent.ReadAsStreamAsync().ConfigureAwait(false);
@@ -109,10 +129,8 @@ namespace i18n.Core.Middleware
         }
         
         [SuppressMessage("ReSharper", "UnusedVariable")]
-        string ReplaceNuggets(CultureInfo cultureInfo, string text)
-        { 
-            var cultureDictionary = _localizationManager.GetDictionary(cultureInfo);
-
+        static string ReplaceNuggets(CultureDictionary cultureDictionary, string text)
+        {
             string ReplaceNuggets(Match match)
             {
                 var textInclNugget = match.Value;
