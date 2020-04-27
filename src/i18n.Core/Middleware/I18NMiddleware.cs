@@ -24,7 +24,9 @@ namespace i18n.Core.Middleware
         static readonly Regex NuggetFindRegex = new Regex(@"\[\[\[(.*?)\]\]\]", RegexOptions.Compiled);
 
         static readonly IEnumerable<string> ValidContentTypes = new HashSet<string> {
-            "text/html"
+            "text/html", 
+            "application/json", 
+            "application/javascript"
         };
 
         readonly RequestDelegate _next;
