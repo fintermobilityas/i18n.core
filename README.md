@@ -23,16 +23,15 @@ of an **easier**, globally recognized standard for localizing ASP.NET-based web 
 // This method gets called by the runtime. Use this method to add services to the container.
 public void ConfigureServices(IServiceCollection services)
 {
-    var i18NRootDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!);
-    services.AddI18NLocalization(i18NRootDirectory, options =>
+    services.AddI18NLocalization(HostEnvironment, options =>
     {
         var supportedCultures = new[]
         {
-            new CultureInfo("no"),
-            new CultureInfo("en")
+            new CultureInfo("nb-NO"),
+            new CultureInfo("en-US")
         };
 
-        var defaultCulture = supportedCultures.Single(x => x.Name == "en");
+        var defaultCulture = supportedCultures.Single(x => x.Name == "en-US");
 
         options.DefaultRequestCulture = new RequestCulture(defaultCulture);
         options.SupportedCultures = supportedCultures;
