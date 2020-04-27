@@ -55,14 +55,16 @@ public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 
 ### Automatically update *.pot file (Portable Object Template)
 
-```ps
+```
+dotnet tool install pot -g
 pot --watch
 ```
 
-### Custom configuration (web.config)
+### Custom configuration (Web.config)
 
+NB! This is not required for this to work as you can configure this middleware by resolving `IOptions<I18NLocalizationOptions>`. It's available for legacy reasons only.
 
-
+```xml
 <?xml version="1.0"?>
 
 <configuration>
@@ -71,6 +73,7 @@ pot --watch
     <add key="i18n.GenerateTemplatePerFile" value="false"/>
   </appSettings>
 </configuration>
+```
 
 ### Special thanks to
 
