@@ -31,7 +31,7 @@ namespace i18n.Core.Middleware
         readonly ILocalizationManager _localizationManager;
         readonly ILogger<I18NMiddleware> _logger;
 
-        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, [MaybeNull] ILogger<I18NMiddleware> logger)
+        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, [CanBeNull] ILogger<I18NMiddleware> logger)
         {
             _next = next;
             _localizationManager = localizationManager;
@@ -74,7 +74,7 @@ namespace i18n.Core.Middleware
             CultureInfo translationCultureInfo;
             if (requestCultureFeature == null)
             {
-                _logger.LogWarning($"{nameof(IRequestCultureFeature)} is not configured. Thread culture will be used instead.");
+                _logger?.LogWarning($"{nameof(IRequestCultureFeature)} is not configured. Thread culture will be used instead.");
                 translationCultureInfo = CultureInfo.DefaultThreadCurrentCulture;
             }
             else
