@@ -19,6 +19,9 @@ namespace pot
 
         [Option('w', "web-config-path", Required = false, HelpText = "Path to web.config that contain i18n.* settings.")]
         public string WebConfigPath { get; [UsedImplicitly] set; }
+
+        [Option("verbose", Required = false, HelpText = "Set output to verbose.")]
+        public bool Verbose { get; [UsedImplicitly] set; }
     }
 
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
@@ -56,15 +59,32 @@ namespace pot
         {
             ReferenceContext.ShowSourceContext = options.ShowSourceContext;
 
-            var projectDirectory = options.WebConfigPath != null ? 
-                Path.GetFullPath(
-                    Path.GetDirectoryName(options.WebConfigPath) ?? Directory.GetCurrentDirectory()) : 
-                Directory.GetCurrentDirectory();
-            var webConfigFilename = Path.GetFullPath(options.WebConfigPath ?? projectDirectory);
+            string projectDirectory;
+            string webConfigFilename;
 
-            if (webConfigFilename.LastIndexOf("Web.config", StringComparison.OrdinalIgnoreCase) == -1)
+            if (options.WebConfigPath != null)
             {
-                webConfigFilename = Path.Combine(webConfigFilename, "Web.config");
+                if (options.WebConfigPath.LastIndexOf("Web.config", StringComparison.OrdinalIgnoreCase) == -1)
+                {
+                    projectDirectory = Path.GetFullPath(options.WebConfigPath);
+                    webConfigFilename = Path.Combine(projectDirectory, "Web.config");
+                }
+                else
+                {
+                    projectDirectory = Path.GetFullPath(Path.GetDirectoryName(options.WebConfigPath)!);
+                    webConfigFilename = options.WebConfigPath;
+                }
+            }
+            else
+            {
+                projectDirectory = Directory.GetCurrentDirectory();
+                webConfigFilename = Path.Combine(projectDirectory, "Web.config");
+            }
+
+            if (options.Verbose)
+            {
+                Console.WriteLine($"Project directory: {projectDirectory}");
+                Console.WriteLine($"Web.config filename: {webConfigFilename}");
             }
 
             var sw = new Stopwatch();
