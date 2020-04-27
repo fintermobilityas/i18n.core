@@ -1,12 +1,8 @@
-# i18n.core
+# i18n.Core
 
+## Smart internationalization for ASP.NET Core
 
-
-## Smart internationalization for ASP.NET
-
-```
-<PackageReference Include="i18n.Core" Version="*" />
-```
+Sponsored by Finter Mobility AS.
 
 ### Platforms supported
 
@@ -17,18 +13,68 @@
 The i18n library is designed to replace the use of .NET resources in favor 
 of an **easier**, globally recognized standard for localizing ASP.NET-based web applications.
 
-### Project configuration
+### Project configuration (ASP.NET CORE)
 
+```xml
+&lt;PackageReference Include=&quot;i18n.Core&quot; Version=&quot;*&quot; /&gt;
 ```
 
+```cs
+// This method gets called by the runtime. Use this method to add services to the container.
+public void ConfigureServices(IServiceCollection services)
+{
+    var i18NRootDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!);
+    services.AddI18NLocalization(i18NRootDirectory, options =>
+    {
+        var supportedCultures = new[]
+        {
+            new CultureInfo("no"),
+            new CultureInfo("en")
+        };
+
+        var defaultCulture = supportedCultures.Single(x => x.Name == "en");
+
+        options.DefaultRequestCulture = new RequestCulture(defaultCulture);
+        options.SupportedCultures = supportedCultures;
+        options.SupportedUICultures = supportedCultures;
+        options.RequestCultureProviders = new List<IRequestCultureProvider>
+        {
+            new CookieRequestCultureProvider()
+        };
+    });
+}
 ```
 
-
-
-### Update existing translations
-
-
-
+```cs
+// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    app.UseI18NRequestLocalization();
+}
 ```
-dotnet tool install -g pot
+
+### Automatically update *.pot file (Portable Object Template)
+
+```ps
+pot --watch
 ```
+
+### Custom configuration (web.config)
+
+
+
+<?xml version="1.0"?>
+
+<configuration>
+  <appSettings>
+    <add key="i18n.DirectoriesToScan" value=".;"/>
+    <add key="i18n.GenerateTemplatePerFile" value="false"/>
+  </appSettings>
+</configuration>
+
+### Special thanks to
+
+This project is mainly built on hard work of the following projects:
+
+- https://github.com/OrchardCMS/OrchardCore
+- https://github.com/turquoiseowl/i18n
