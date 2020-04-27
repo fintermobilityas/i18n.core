@@ -74,6 +74,10 @@ NB! This is not required for this to work as you can configure this middleware b
 </configuration>
 ```
 
+### Demo
+
+A demo project is available in this repository. You can find it [here](https://github.com/fintermobilityas/i18n.core/tree/master/src/i18n.Demo)
+
 ### Special thanks to
 
 This project is mainly built on hard work of the following projects:
