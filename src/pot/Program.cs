@@ -133,14 +133,11 @@ namespace pot
                     var watcher = new FileSystemWatcher
                     {
                         Path = directory,
-                        NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName,
+                        NotifyFilter = NotifyFilters.LastWrite
+                                       | NotifyFilters.FileName
+                                       | NotifyFilters.DirectoryName,
                         IncludeSubdirectories = true
                     };
-
-                    watcher.NotifyFilter = NotifyFilters.LastAccess
-                                           | NotifyFilters.LastWrite
-                                           | NotifyFilters.FileName
-                                           | NotifyFilters.DirectoryName;
 
                     foreach (var filter in filters)
                     {

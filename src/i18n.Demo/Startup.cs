@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using i18n.Core.Extensions;
 using Microsoft.AspNetCore.Builder;
@@ -12,28 +12,31 @@ using Microsoft.Extensions.Hosting;
 
 namespace i18n.Demo
 {
+    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
             Configuration = configuration;
+            HostEnvironment = hostEnvironment;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostEnvironment HostEnvironment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var i18NRootDirectory = Path.Combine(Path.GetDirectoryName(typeof(Program).Assembly.Location)!);
-            services.AddI18NLocalization(i18NRootDirectory, options =>
+            services.AddI18NLocalization(HostEnvironment, options =>
             {
                 var supportedCultures = new[]
                 {
-                    new CultureInfo("no"),
-                    new CultureInfo("en")
+                    new CultureInfo("nb-NO"),
+                    new CultureInfo("en-US")
                 };
 
-                var defaultCulture = supportedCultures.Single(x => x.Name == "en");
+                var defaultCulture = supportedCultures.Single(x => x.Name == "en-US");
 
                 options.DefaultRequestCulture = new RequestCulture(defaultCulture);
                 options.SupportedCultures = supportedCultures;

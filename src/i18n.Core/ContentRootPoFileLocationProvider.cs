@@ -1,10 +1,12 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using i18n.Core.Abstractions;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.FileProviders.Physical;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 
 namespace i18n.Core
@@ -14,25 +16,30 @@ namespace i18n.Core
     /// </summary>
     public class ContentRootPoFileLocationProvider : ILocalizationFileLocationProvider
     {
-        readonly string _resourcesContainer;
         readonly string _contentRootPath;
+        readonly CultureInfo _defaultCulture;
 
         /// <summary>
         /// Creates a new instance of <see cref="ContentRootPoFileLocationProvider"/>.
         /// </summary>
         /// <param name="hostEnvironment"><see cref="IHostEnvironment"/>.</param>
-        /// <param name="localizationOptions">The IOptions<LocalizationOptions>.</param>
-        public ContentRootPoFileLocationProvider(IHostEnvironment hostEnvironment, IOptions<LocalizationOptions> localizationOptions)
+        /// <param name="requestLocalizationOptions">The IOptions<RequestLocalizationOptions>.</param>
+        public ContentRootPoFileLocationProvider(IHostEnvironment hostEnvironment, IOptions<RequestLocalizationOptions> requestLocalizationOptions)
         {
             _contentRootPath = hostEnvironment.ContentRootPath;
-            _resourcesContainer = localizationOptions.Value.ResourcesPath;
+            _defaultCulture = requestLocalizationOptions.Value.DefaultRequestCulture.Culture;
         }
 
         /// <inheritdocs />
         public IEnumerable<IFileInfo> GetLocations(string cultureName)
         {
-            yield return new PhysicalFileInfo(new FileInfo(Path.Combine(_resourcesContainer, cultureName + ".po")));
-            yield return new PhysicalFileInfo(new FileInfo(Path.Combine(_contentRootPath, "locale", cultureName + ".po")));
+            if (string.Equals(cultureName, _defaultCulture.Name, StringComparison.Ordinal))
+            {
+                yield return new PhysicalFileInfo(new FileInfo(Path.Combine(_contentRootPath, "locale", "messages.pot")));
+                yield break;
+            }
+
+            yield return new PhysicalFileInfo(new FileInfo(Path.Combine(_contentRootPath, "locale", cultureName, "messages.po")));
         }
     }
 }

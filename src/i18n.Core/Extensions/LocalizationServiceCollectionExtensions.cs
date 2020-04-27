@@ -7,6 +7,7 @@ using i18n.Core.PortableObject;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Localization;
 
 // ReSharper disable once CheckNamespace
@@ -22,13 +23,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Registers the services to enable localization using Portable Object files.
         /// </summary>
         /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-        /// <param name="i18NLocaleDirectory"></param>
+        /// <param name="hostEnvironment"></param>
         /// <param name="requestLocalizationSetup">An action to configure the Microsoft.Extensions.Localization.LocalizationOptions.</param>
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-        public static IServiceCollection AddI18NLocalization([JetBrains.Annotations.NotNull] this IServiceCollection services, [JetBrains.Annotations.NotNull] string i18NLocaleDirectory, Action<RequestLocalizationOptions> requestLocalizationSetup = null)
+        public static IServiceCollection AddI18NLocalization([JetBrains.Annotations.NotNull] this IServiceCollection services,
+            [JetBrains.Annotations.NotNull] IHostEnvironment hostEnvironment, Action<RequestLocalizationOptions> requestLocalizationSetup = null)
         {
             if (services == null) throw new ArgumentNullException(nameof(services));
-            if (i18NLocaleDirectory == null) throw new ArgumentNullException(nameof(i18NLocaleDirectory));
+            if (hostEnvironment == null) throw new ArgumentNullException(nameof(hostEnvironment));
 
             services.AddSingleton<IPluralRuleProvider, DefaultPluralRuleProvider>();
             services.AddSingleton<ITranslationProvider, PortableObjectFilesTranslationsProvider>();
@@ -36,7 +38,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ILocalizationManager, LocalizationManager>();
             services.AddSingleton<IStringLocalizerFactory, PortableObjectStringLocalizerFactory>();
             services.AddSingleton<IHtmlLocalizerFactory, PortableObjectHtmlLocalizerFactory>();
-            services.AddSingleton<ISettingsProvider>(x => new SettingsProvider(i18NLocaleDirectory));
+            services.AddSingleton<ISettingsProvider>(x => new SettingsProvider(hostEnvironment.ContentRootPath));
            
             services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
 

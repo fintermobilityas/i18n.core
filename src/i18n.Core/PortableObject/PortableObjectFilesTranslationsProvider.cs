@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using i18n.Core.Abstractions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
@@ -40,34 +41,19 @@ namespace i18n.Core.PortableObject
             var cultureName = cultureInfo.Name;
             fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName));
 
-            if (cultureName.IndexOf("-", StringComparison.Ordinal) != -1)
+            foreach (var fileInfo in fileInfos.Where(fileInfo => !fileInfo.IsDirectory))
             {
-                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureName.Replace("-", "_")));
-            }
-
-            if (cultureName != cultureInfo.Name)
-            {
-                fileInfos.AddRange(_poFilesLocationProvider.GetLocations(cultureInfo.Name));
-            }
-
-            foreach (var fileInfo in fileInfos)
-            {
-                if (fileInfo.IsDirectory)
-                {
-                    continue;
-                }
-
                 if (fileInfo.Exists)
                 {
                     using var stream = fileInfo.CreateReadStream();
                     using var reader = new StreamReader(stream);
                     dictionary.MergeTranslations(_parser.Parse(reader));
 
-                    _logger?.LogDebug($"Translations for culture found: {cultureInfo.Name}. Translations available: {dictionary.Translations.Count}. Path: {fileInfo.PhysicalPath}.");
+                    _logger?.LogDebug($"Translations for culture found: {cultureName}. Translations available: {dictionary.Translations.Count}. Path: {fileInfo.PhysicalPath}.");
                     break;
                 }
 
-                _logger?.LogWarning($"Translation for culture was not found: {cultureInfo.Name}. Path: {fileInfo}.");
+                _logger?.LogWarning($"Translation for culture was not found: {cultureName}. Path: {fileInfo.PhysicalPath}.");
             }
         }
 

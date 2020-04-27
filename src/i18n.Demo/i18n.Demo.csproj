@@ -15,15 +15,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="locale\nb_NO.po" Link="locale\no.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="locale\messages.pot" Link="locale\en.po" CopyToPublishDirectory="PreserveNewest" CopyToOutputDirectory="PreserveNewest" />
-    <None Remove="locale\*.pot" />
-    <None Remove="locale\*.pot.backup" />
-    <None Remove="locale\*.mo" />
-    <None Remove="locale\*_*.po" />
+    <Compile Remove="locale\**" />
+    <Content Remove="locale\**" />
+    <EmbeddedResource Remove="locale\**" />
+    <None Remove="locale\**" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+  <Target Name="ContentsBeforeBuild" AfterTargets="BeforeBuild">
+    <ItemGroup>
+      <Content Include="locale\nb-NO.po" Link="locale\nb-NO.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
+      <Content Include="locale\messages.pot" Link="locale\en-US.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="GenerateTemplatePotFile" BeforeTargets="BeforeBuild">
     <Exec Command="pot" />
   </Target>
 
