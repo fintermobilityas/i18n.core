@@ -104,7 +104,7 @@ namespace i18n.Core.PortableObject
                     argumentsWithCount = new object[] { pluralArgument.Count };
                 }
 
-                translation = translation ?? GetTranslation(pluralArgument.Forms, CultureInfo.CurrentUICulture, pluralArgument.Count);
+                translation ??= GetTranslation(pluralArgument.Forms, CultureInfo.CurrentUICulture, pluralArgument.Count);
 
                 return (new LocalizedString(name, translation, translation == null), argumentsWithCount);
             }
@@ -119,9 +119,9 @@ namespace i18n.Core.PortableObject
         {
             var dictionary = _localizationManager.GetDictionary(culture);
 
-            foreach (var translation in dictionary.Translations)
+            foreach (var (key, value) in dictionary.Translations)
             {
-                yield return new LocalizedString(translation.Key, translation.Value.FirstOrDefault());
+                yield return new LocalizedString(key, value.FirstOrDefault());
             }
         }
 
@@ -138,7 +138,7 @@ namespace i18n.Core.PortableObject
                 {
                     foreach (var localizedString in localizedStrings)
                     {
-                        if (!allLocalizedStrings.Any(ls => ls.Name == localizedString.Name))
+                        if (allLocalizedStrings.All(ls => ls.Name != localizedString.Name))
                         {
                             allLocalizedStrings.Add(localizedString);
                         }
@@ -146,7 +146,7 @@ namespace i18n.Core.PortableObject
                 }
 
                 currentCulture = currentCulture.Parent;
-            } while (currentCulture != currentCulture.Parent);
+            } while (!Equals(currentCulture, currentCulture.Parent));
 
             return allLocalizedStrings;
         }
@@ -165,7 +165,7 @@ namespace i18n.Core.PortableObject
                 }
 
                 // Use the latest available form
-                return pluralForms[pluralForms.Length - 1];
+                return pluralForms[^1];
             }
 
             return pluralForms[pluralForm];
@@ -187,7 +187,7 @@ namespace i18n.Core.PortableObject
 
                         culture = culture.Parent;
                     }
-                    while (culture != CultureInfo.InvariantCulture);
+                    while (!Equals(culture, CultureInfo.InvariantCulture));
                 }
                 else
                 {

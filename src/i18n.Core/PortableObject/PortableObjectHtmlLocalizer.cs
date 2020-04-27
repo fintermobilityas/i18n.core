@@ -39,16 +39,17 @@ namespace i18n.Core.PortableObject
 
                 // Otherwise an already formatted string containing curly braces will be wrongly reformatted.
 
-                if (_localizer is IPluralStringLocalizer pluralLocalizer && arguments.Length == 1 && arguments[0] is PluralizationArgument pluralArgument)
+                switch (_localizer)
                 {
-                    // Get an unformatted string and all non plural arguments (1st one is the plural count).
-                    var (translation, argumentsWithCount) = pluralLocalizer.GetTranslation(name, arguments);
+                    case IPluralStringLocalizer pluralLocalizer when arguments.Length == 1 && arguments[0] is PluralizationArgument pluralArgument:
+                        // Get an unformatted string and all non plural arguments (1st one is the plural count).
+                        var (translation, argumentsWithCount) = pluralLocalizer.GetTranslation(name, arguments);
 
-                    // Formatting will use non plural arguments if any.
-                    return ToHtmlString(translation, argumentsWithCount);
+                        // Formatting will use non plural arguments if any.
+                        return ToHtmlString(translation, argumentsWithCount);
+                    default:
+                        return ToHtmlString(_localizer[name], arguments);
                 }
-
-                return ToHtmlString(_localizer[name], arguments);
             }
         }
     }
