@@ -50,6 +50,7 @@ namespace i18n.Core.Middleware
         public I18NMiddlewareOptions()
         {
             ValidContentTypes = new List<string>();
+            ExcludeUrls = new List<string>();
         }
 
         internal void Default([JetBrains.Annotations.NotNull] IPooledStreamManager pooledStreamManager)
