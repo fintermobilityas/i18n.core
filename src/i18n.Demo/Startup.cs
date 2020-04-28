@@ -28,7 +28,7 @@ namespace i18n.Demo
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddI18NLocalization(HostEnvironment, options =>
+            services.AddI18NLocalization(HostEnvironment, requestLocalizationOptions =>
             {
                 var supportedCultures = new[]
                 {
@@ -38,13 +38,16 @@ namespace i18n.Demo
 
                 var defaultCulture = supportedCultures.Single(x => x.Name == "en-US");
 
-                options.DefaultRequestCulture = new RequestCulture(defaultCulture);
-                options.SupportedCultures = supportedCultures;
-                options.SupportedUICultures = supportedCultures;
-                options.RequestCultureProviders = new List<IRequestCultureProvider>
+                requestLocalizationOptions.DefaultRequestCulture = new RequestCulture(defaultCulture);
+                requestLocalizationOptions.SupportedCultures = supportedCultures;
+                requestLocalizationOptions.SupportedUICultures = supportedCultures;
+                requestLocalizationOptions.RequestCultureProviders = new List<IRequestCultureProvider>
                 {
                     new CookieRequestCultureProvider()
                 };
+            }, i18NMiddlewareOptions =>
+            {
+                // Configure middleware options here.
             });
 
             services.AddControllersWithViews();

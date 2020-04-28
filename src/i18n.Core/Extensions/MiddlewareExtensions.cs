@@ -1,4 +1,5 @@
-﻿using i18n.Core.Abstractions.Domain;
+﻿using System.Diagnostics.CodeAnalysis;
+using i18n.Core.Abstractions.Domain;
 using i18n.Core.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace i18n.Core.Extensions
 {
+    [SuppressMessage("ReSharper", "UnusedMethodReturnValue.Global")]
     public static class MiddlewareExtensions
     {
         public static IApplicationBuilder UseI18NRequestLocalization(this IApplicationBuilder app)
