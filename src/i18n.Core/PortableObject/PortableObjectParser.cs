@@ -90,22 +90,17 @@ namespace i18n.Core.PortableObject
             return sb == null ? str : sb.ToString();
         }
 
-        string TrimQuote(string str)
+        static string TrimQuote(string str)
         {
             if (str.StartsWith('\"') && str.EndsWith('\"'))
             {
-                if (str.Length == 1)
-                {
-                    return "";
-                }
-
-                return str.Substring(1, str.Length - 2);
+                return str.Length == 1 ? string.Empty : str.Substring(1, str.Length - 2);
             }
 
             return str;
         }
 
-        (PoContext context, string content) ParseLine(string line)
+        static (PoContext context, string content) ParseLine(string line)
         {
             if (line.StartsWith('\"'))
             {
@@ -119,18 +114,18 @@ namespace i18n.Core.PortableObject
             }
 
             var content = Unescape(TrimQuote(keyAndValue[1].Trim()));
-            switch (keyAndValue[0])
+            return keyAndValue[0] switch
             {
-                case "msgctxt": return (PoContext.MessageContext, content);
-                case "msgid": return (PoContext.MessageId, content);
-                case var key when key.StartsWith("msgstr", StringComparison.Ordinal): return (PoContext.Translation, content);
-                default: return (PoContext.Other, content);
-            }
+                "msgctxt" => (PoContext.MessageContext, content),
+                "msgid" => (PoContext.MessageId, content),
+                var key when key.StartsWith("msgstr", StringComparison.Ordinal) => (PoContext.Translation, content),
+                _ => (PoContext.Other, content)
+            };
         }
 
         [SuppressMessage("ReSharper", "MemberCanBePrivate.Local")]
         [SuppressMessage("ReSharper", "UnusedMember.Local")]
-        class DictionaryRecordBuilder
+        sealed class DictionaryRecordBuilder
         {
             readonly List<string> _values;
             IEnumerable<string> ValidValues => _values.Where(value => !string.IsNullOrEmpty(value));
