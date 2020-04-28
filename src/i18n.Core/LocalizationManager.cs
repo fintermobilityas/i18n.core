@@ -65,7 +65,7 @@ namespace i18n.Core
             {
                 _cache.Remove(cacheKeyPrefix);
 
-                if (_isDevelopmentEnvironment)
+                if (!_isDevelopmentEnvironment)
                 {
                     _logger?.LogWarning("Cache is disabled. Translations will be built per request. This is only normal during development.");
                 }
