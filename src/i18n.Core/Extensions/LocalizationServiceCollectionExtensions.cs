@@ -45,7 +45,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IHtmlLocalizerFactory, PortableObjectHtmlLocalizerFactory>();
             services.AddSingleton<ISettingsProvider>(x => new SettingsProvider(hostEnvironment.ContentRootPath));
             services.AddSingleton<IPooledStreamManager>(defaultPooledStreamManager);
-           
+
             services.TryAddTransient(typeof(IStringLocalizer<>), typeof(StringLocalizer<>));
 
             if (requestLocalizationSetupAction != null)
@@ -55,14 +55,21 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (middleWareOptionsSetupAction != null)
             {
-                services.Configure(middleWareOptionsSetupAction);
+                services.Configure<I18NMiddlewareOptions>(x =>
+                {
+                    x.CacheEnabled = !hostEnvironment.IsDevelopment();
+                    middleWareOptionsSetupAction(x);
+                });
             }
             else
             {
-                services.AddSingleton(new I18NMiddlewareOptions());
+                services.AddSingleton(new I18NMiddlewareOptions
+                {
+                    CacheEnabled = !hostEnvironment.IsDevelopment()
+                });
             }
 
-            services.AddSingleton(x => 
+            services.AddSingleton(x =>
                 Options.Options.Create(new I18NLocalizationOptions(x.GetRequiredService<ISettingsProvider>())));
 
             return services;

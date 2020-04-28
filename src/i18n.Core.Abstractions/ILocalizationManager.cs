@@ -8,15 +8,12 @@ namespace i18n.Core.Abstractions
     public interface ILocalizationManager
     {
         /// <summary>
-        /// Disables cache. This is usefull during development.
-        /// </summary>
-        bool DisableCache { get; set; }
-        /// <summary>
         /// Retrieves a dictionary for a specified culture.
         /// </summary>
         /// <param name="culture">The <see cref="CultureInfo"/>.</param>
+        /// <param name="disableCache"></param>
         /// <returns>A <see cref="CultureDictionary"/> for the specified culture.</returns>
-        CultureDictionary GetDictionary(CultureInfo culture);
+        CultureDictionary GetDictionary(CultureInfo culture, bool disableCache = false);
         /// <summary>
         /// Translates text to a given culture.
         /// </summary>

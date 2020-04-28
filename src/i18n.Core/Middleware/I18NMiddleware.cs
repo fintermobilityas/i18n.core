@@ -7,7 +7,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using i18n.Core.Abstractions;
-using i18n.Core.PortableObject;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
@@ -44,6 +43,7 @@ namespace i18n.Core.Middleware
     {
         public ICollection<string> ValidContentTypes { get; }
         public ICollection<string> ExcludeUrls { get; }
+        public bool CacheEnabled { get; [UsedImplicitly] set; }
 
         public I18NMiddlewareOptions()
         {
@@ -138,7 +138,7 @@ namespace i18n.Core.Middleware
                     responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
                 }
 
-                var cultureDictionary = _localizationManager.GetDictionary(translationCultureInfo);
+                var cultureDictionary = _localizationManager.GetDictionary(translationCultureInfo, !_options.CacheEnabled);
 
                 _logger?.LogDebug(
                     $"Request path: {context.Request.Path}. Culture name: {cultureDictionary.CultureName}. Translations: {cultureDictionary.Translations.Count}.");
