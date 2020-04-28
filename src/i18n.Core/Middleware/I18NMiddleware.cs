@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using i18n.Core.Abstractions;
+using i18n.Core.PortableObject;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
@@ -28,13 +27,13 @@ namespace i18n.Core.Middleware
     {
         static readonly RecyclableMemoryStreamManager PooledStreamManager = new RecyclableMemoryStreamManager();
 
-        public Stream GetStream([JetBrains.Annotations.NotNull] string name)
+        public Stream GetStream([NotNull] string name)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             return PooledStreamManager.GetStream(name);
         }
 
-        public ValueTask ReturnStreamAsync([JetBrains.Annotations.NotNull] Stream stream)
+        public ValueTask ReturnStreamAsync([NotNull] Stream stream)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             return stream.DisposeAsync();
@@ -67,21 +66,21 @@ namespace i18n.Core.Middleware
 
     public sealed class I18NMiddleware
     {
-        static readonly Regex NuggetFindRegex = new Regex(@"\[\[\[(.*?)\]\]\]", RegexOptions.Compiled);
-
         readonly RequestDelegate _next;
         readonly ILocalizationManager _localizationManager;
         readonly ILogger<I18NMiddleware> _logger;
         readonly IPooledStreamManager _pooledStreamManager;
+        readonly INuggetReplacer _nuggetReplacer;
         readonly I18NMiddlewareOptions _options;
 
         public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, IOptions<I18NMiddlewareOptions> middleWareOptions, 
-            [CanBeNull] ILogger<I18NMiddleware> logger, IPooledStreamManager pooledStreamManager)
+            [CanBeNull] ILogger<I18NMiddleware> logger, IPooledStreamManager pooledStreamManager, INuggetReplacer nuggetReplacer)
         {
             _next = next;
             _localizationManager = localizationManager;
             _logger = logger;
             _pooledStreamManager = pooledStreamManager;
+            _nuggetReplacer = nuggetReplacer;
             _options = middleWareOptions.Value;
         }
 
@@ -144,7 +143,7 @@ namespace i18n.Core.Middleware
                 _logger?.LogDebug(
                     $"Request path: {context.Request.Path}. Culture name: {cultureDictionary.CultureName}. Translations: {cultureDictionary.Translations.Count}.");
 
-                responseBody = ReplaceNuggets(cultureDictionary, responseBody);
+                responseBody = _nuggetReplacer.Replace(cultureDictionary, responseBody);
 
                 var requestContent = new StringContent(responseBody, Encoding.UTF8, contentType);
                 context.Response.Body = await requestContent.ReadAsStreamAsync().ConfigureAwait(false);
@@ -171,27 +170,5 @@ namespace i18n.Core.Middleware
             response.Body = originBody;
         }
         
-        [SuppressMessage("ReSharper", "UnusedVariable")]
-        static string ReplaceNuggets(CultureDictionary cultureDictionary, string text)
-        {
-            string ReplaceNuggets(Match match)
-            {
-                var textInclNugget = match.Value;
-                var textExclNugget = match.Groups[1].Value;
-                var searchText = textExclNugget;
-
-                if (textExclNugget.IndexOf("///", StringComparison.Ordinal) >= 0)
-                {
-                    // Remove comments
-                    searchText = textExclNugget.Substring(0, textExclNugget.IndexOf("///", StringComparison.Ordinal));
-                }
-
-                var translationText = cultureDictionary[searchText];
-                return translationText ?? searchText;
-            }
-
-            return NuggetFindRegex.Replace(text, ReplaceNuggets);
-        }
-
     }
 }

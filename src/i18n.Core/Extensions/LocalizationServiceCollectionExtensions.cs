@@ -36,6 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var defaultPooledStreamManager = new DefaultPooledStreamManager();
 
+            services.AddSingleton<INuggetReplacer, DefaultNuggetReplacer>();
             services.AddSingleton<IPluralRuleProvider, DefaultPluralRuleProvider>();
             services.AddSingleton<ITranslationProvider, PortableObjectFilesTranslationsProvider>();
             services.AddSingleton<ILocalizationFileLocationProvider, ContentRootPoFileLocationProvider>();

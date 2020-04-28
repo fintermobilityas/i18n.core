@@ -23,6 +23,7 @@ namespace i18n.Core
         readonly IList<IPluralRuleProvider> _pluralRuleProviders;
         readonly ITranslationProvider _translationProvider;
         readonly IMemoryCache _cache;
+        readonly INuggetReplacer _nuggetReplacer;
         readonly ILogger<LocalizationManager> _logger;
         readonly bool _isDevelopmentEnvironment;
 
@@ -35,17 +36,20 @@ namespace i18n.Core
         /// <param name="translationProvider">The <see cref="ITranslationProvider"/>.</param>
         /// <param name="cache">The <see cref="IMemoryCache"/>.</param>
         /// <param name="hostEnvironment"></param>
+        /// <param name="nuggetReplacer"></param>
         /// <param name="logger"></param>
         public LocalizationManager(
             IEnumerable<IPluralRuleProvider> pluralRuleProviders,
             ITranslationProvider translationProvider,
             IMemoryCache cache,
             IHostEnvironment hostEnvironment,
+            INuggetReplacer nuggetReplacer,
             [CanBeNull] ILogger<LocalizationManager> logger)
         {
             _pluralRuleProviders = pluralRuleProviders.OrderBy(o => o.Order).ToArray();
             _translationProvider = translationProvider;
             _cache = cache;
+            _nuggetReplacer = nuggetReplacer;
             _logger = logger;
             _isDevelopmentEnvironment = hostEnvironment.IsDevelopment();
 
@@ -86,6 +90,13 @@ namespace i18n.Core
             }, LazyThreadSafetyMode.ExecutionAndPublication));
 
             return cachedDictionary.Value;
+        }
+
+        /// <inheritdocs />
+        public string Translate(CultureInfo culture, string text)
+        {
+            var cultureDictionary = GetDictionary(culture);
+            return _nuggetReplacer.Replace(cultureDictionary, text);
         }
     }
 }
