@@ -50,6 +50,7 @@ namespace i18n.Core.Middleware
             ValidContentTypes = new List<string>
             {
                 "text/html",
+                "text/json",
                 "application/json",
                 "application/javascript"
             };
