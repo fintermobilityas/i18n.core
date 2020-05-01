@@ -16,7 +16,7 @@ of an **easier**, globally recognized standard for localizing ASP.NET-based web 
 ### Project configuration (ASP.NET CORE)
 
 ```xml
-<PackageReference Include="i18n.Core" Version="*" />
+<PackageReference Include="i18n.Core" Version="1.0.10" />
 ```
 
 ```cs
