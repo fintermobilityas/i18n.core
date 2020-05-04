@@ -11,7 +11,7 @@
     <Description>Utility for generating POT templates for the i18n.Core project.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.7.82" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
   </ItemGroup>
   <ItemGroup>
