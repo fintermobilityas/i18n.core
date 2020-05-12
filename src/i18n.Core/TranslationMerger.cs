@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using i18n.Core.Pot;
 using i18n.Core.Pot.Entities;

@@ -18,10 +18,12 @@ namespace i18n.Core.Pot
     internal class PoTranslationRepository : ITranslationRepository
     {
         readonly I18NLocalizationOptions _localizationOptions;
+        readonly string _assemblyVersion;
 
-        public PoTranslationRepository(I18NLocalizationOptions localizationOptions)
+        public PoTranslationRepository(I18NLocalizationOptions localizationOptions, string assemblyVersion = null)
         {
             _localizationOptions = localizationOptions;
+            _assemblyVersion = assemblyVersion ?? "0.0.0";
         }
 
         public Translation GetTranslation(string langtag, List<string> fileNames = null, bool loadingCache = true)
@@ -140,7 +142,7 @@ namespace i18n.Core.Pot
             stream.WriteLine("\"MIME-Version: 1.0\\n\"");
             stream.WriteLine("\"Content-Type: text/plain; charset=utf-8\\n\"");
             stream.WriteLine("\"Content-Transfer-Encoding: 8bit\\n\"");
-            stream.WriteLine("\"X-Generator: i18n.POTGenerator\\n\"");
+            stream.WriteLine($"\"X-Generator: pot ({_assemblyVersion})\\n\"");
             stream.WriteLine();
 
             foreach (var item in orderedItems)
@@ -253,7 +255,7 @@ namespace i18n.Core.Pot
             stream.WriteLine("\"MIME-Version: 1.0\\n\"");
             stream.WriteLine("\"Content-Type: text/plain; charset=utf-8\\n\"");
             stream.WriteLine("\"Content-Transfer-Encoding: 8bit\\n\"");
-            stream.WriteLine("\"X-Generator: pot\\n\"");
+            stream.WriteLine($"\"X-Generator: pot ({_assemblyVersion})\\n\"");
             stream.WriteLine();
 
             foreach (var item in orderedItems)

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using CommandLine;
 using i18n.Core;
 using i18n.Core.Abstractions.Domain;
@@ -38,9 +39,16 @@ namespace pot
         static readonly object BuildLock = new object();
         static bool _isBuilding;
         static DateTime? _lastBuildDate;
+        static string _assemblyVersionStr;
 
         public static void Main(string[] args)
         {
+            _assemblyVersionStr = typeof(Program)
+                                       .Assembly
+                                       .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                                       ?.InformationalVersion
+                                       ?? "0.0.0";
+
             Environment.ExitCode = 1;
 
             Parser.Default
@@ -210,7 +218,7 @@ namespace pot
                 settingsProvider.PopulateFromWebConfig(webConfigFilename);
 
                 var settings = new I18NLocalizationOptions(settingsProvider);
-                var repository = new PoTranslationRepository(settings);
+                var repository = new PoTranslationRepository(settings, _assemblyVersionStr);
                 var nuggetFinder = new FileNuggetFinder(settings);
 
                 var items = nuggetFinder.ParseAll();
