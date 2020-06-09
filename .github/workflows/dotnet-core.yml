@@ -79,7 +79,7 @@ jobs:
         run: | 
           $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
                   
-          dotnet nuget push ".\${{ env.GITHUB_WORKSPACE }}\nupkgs"--source nuget.org --api-key ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}
+          dotnet nuget push ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\*.nupkg"--source nuget.org --api-key ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}
           echo "::set-env name=NUPKG_VERSION::$nupkg_version"
 
       - name: Create github release tag
