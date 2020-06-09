@@ -5,7 +5,9 @@ param(
     [ValidateSet("Debug", "Release")]
     [string] $Configuration = "Release",
     [Parameter(Position = 2, ValueFromPipeline)]
-    [switch] $Nupkg
+    [switch] $Nupkg,
+    [Parameter(Position = 3, ValueFromPipeline)]
+    [switch] $CI
 )
 
 $WorkingDirectory = Split-Path -parent $MyInvocation.MyCommand.Definition
@@ -19,6 +21,7 @@ Invoke-Command-Colored dotnet @(
     ("build {0}" -f (Join-Path $WorkingDirectory i18n.core.sln))
     "/p:Version=$Version",
     "/p:GeneratePackageOnBuild=$Nupkg"
+    "/p:IsCIBuild=$CI"
     "--output $BuildOutputDirectory"
     "--configuration $Configuration"
 )

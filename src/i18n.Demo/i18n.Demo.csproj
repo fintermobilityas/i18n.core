@@ -21,7 +21,7 @@
     <None Remove="locale\**" />
   </ItemGroup>
 
-  <Target Name="ContentsBeforeBuild" AfterTargets="BeforeBuild">
+  <Target Name="ContentsBeforeBuild" AfterTargets="BeforeBuild" Condition="!$(IsCIBuild)">
     <ItemGroup>
       <Content Include="locale\nb-NO.po" Link="locale\nb-NO.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
       <Content Include="locale\messages.pot" Link="locale\en-US.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
