@@ -51,7 +51,7 @@ jobs:
           echo "${{ env.BUILD_VERSION }}" | Out-File ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
 
       - name: Install pot tool
-        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source .\nupkgs
+        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source ".\${{ env.GITHUB_WORKSPACE }}\nupkgs"
 
       - name: Build locale
         shell: pwsh
