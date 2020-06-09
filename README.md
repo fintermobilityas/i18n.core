@@ -1,5 +1,14 @@
 # i18n.Core
 
+- **stable** ![Nuget](https://img.shields.io/nuget/v/i18n.core) 
+- **pre-release**: ![Nuget](https://img.shields.io/nuget/vpre/i18n.core)
+- [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=fintermobilityas/i18n.core)](https://dependabot.com)
+ 
+| Build server | Platforms | Build status |
+|--------------|----------|--------------|
+| Github Actions | windows-latest, ubuntu-latest | Branch: develop ![i18n.core](https://github.com/fintermobilityas/i18n.core/workflows/i18n.core/badge.svg?branch=develop) |
+| Github Actions | windows-latest, ubuntu-latest | Branch: master ![i18n.core](https://github.com/fintermobilityas/i18n.core/workflows/i18n.core/badge.svg?branch=master) |
+
 ## Smart internationalization for ASP.NET Core
 
 Sponsored by Finter Mobility AS.

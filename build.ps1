@@ -1,29 +1,24 @@
 param(
-    [ValidateSet("dotnet-tool", "nupkg")]
-    [string]$Type = "dotnet-tool",
-    [string]$PackageVersion = "0.1.0",
-    [string]$Target = "Rebuild",
-    [string]$Verbosity = "Minimal"
+    [Parameter(Position = 0, ValueFromPipeline)]
+    [string] $Version = "0.0.0",
+    [Parameter(Position = 1, ValueFromPipeline)]
+    [ValidateSet("Debug", "Release")]
+    [string] $Configuration = "Release",
+    [Parameter(Position = 2, ValueFromPipeline)]
+    [switch] $Nupkg
 )
 
-$RootDirectory = Split-Path -parent $script:MyInvocation.MyCommand.Path
-$BuildDirectory = Join-Path $RootDirectory build
-$ToolsBuildDirectory = Join-Path $BuildDirectory tools
-$NupkgsDir = Join-Path $RootDirectory nupkgs
+$WorkingDirectory = Split-Path -parent $MyInvocation.MyCommand.Definition
+. $WorkingDirectory\common.ps1
 
-$PotToolSrcDirectory = Join-Path $RootDirectory src\pot
-$PotToolCsproj = Join-Path $PotToolSrcDirectory pot.csproj
-$PotToolBuildDirectory = Join-Path $ToolsBuildDirectory pot\$PackageVersion
+$BuildOutputDirectory = Join-Path $WorkingDirectory build\$Version
 
-function Build-Pot {
-    . dotnet tool uninstall -g pot 
-    . dotnet pack $PotToolCsproj --output $PotToolBuildDirectory -c Release /p:Version=$PackageVersion $PotCsproj 
-    . dotnet tool install --add-source $PotToolBuildDirectory --global pot
-}
+Resolve-Shell-Dependency dotnet
 
-switch($type)
-{
-    "dotnet-tool" {
-        Build-Pot 
-    }
-}
+Invoke-Command-Colored dotnet @(
+    ("build {0}" -f (Join-Path $WorkingDirectory i18n.core.sln))
+    "/p:Version=$Version",
+    "/p:GeneratePackageOnBuild=$Nupkg"
+    "--output $BuildOutputDirectory"
+    "--configuration $Configuration"
+)

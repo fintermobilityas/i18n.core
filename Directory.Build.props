@@ -18,14 +18,12 @@
 
   <PropertyGroup>
     <Authors>Peter Rekdal Sunde</Authors>
-    <Product>i18n.Core</Product>
-    <Copyright>Copyright © Peter Rekdal Sunde</Copyright>
+    <Copyright>Copyright © Finter Mobility As</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseUrl>https://opensource.org/licenses/BSD-3-Clause</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/fintermobilityas/i18n.core</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fintermobilityas/i18n.core.git</RepositoryUrl>
-    <PackageReleaseNotes>See $(PackageProjectUrl)/blob/master/CHANGELOG.md#v$(VersionPrefix.Replace('.','')) for release notes.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <IsPackable>false</IsPackable>
     <NoPackageAnalysis>true</NoPackageAnalysis>
