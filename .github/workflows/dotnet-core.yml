@@ -63,7 +63,7 @@ jobs:
         
   publish:
      if: success()
-     runs-on: windows-latest
+     runs-on: ubuntu-latest
      name: Publish nuget package
      needs: [build]
      steps:
