@@ -11,7 +11,7 @@
 
 ## Smart internationalization for ASP.NET Core
 
-Sponsored by Finter Mobility AS.
+Sponsored by Finter Mobility AS. We are hiring! Check out our remote positions over at [finterjobs.com](https://finterjobs.com).
 
 ### Platforms supported
 
