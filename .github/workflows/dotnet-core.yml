@@ -28,7 +28,7 @@ jobs:
       - name: Read dotnet sdk version from global.json
         shell: pwsh
         run: |
-          $DOTNET_VERSION = Get-Content ".\$GITHUB_WORKSPACE\global.json" | ConvertFrom-Json | Select-Object -Expand sdk | Select-Object -Expand version    
+          $DOTNET_VERSION = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\global.json" | ConvertFrom-Json | Select-Object -Expand sdk | Select-Object -Expand version    
           echo "::set-env name=DOTNET_VERSION::$DOTNET_VERSION"
           
       - name: Setup dotnet v${{ env.DOTNET_VERSION }}
@@ -56,8 +56,8 @@ jobs:
       - name: Build locale
         shell: pwsh
         run: |          
-          $pot_filename = ".\src\i18n.Demo\locale\messages.pot"
-          $web_config_filename = ".\src\i18n.Demo\Web.config"
+          $pot_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\locale\messages.pot"
+          $web_config_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\Web.config"
 
           pot --web-config-path $web_config_filename
 
