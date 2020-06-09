@@ -21,15 +21,12 @@
     <None Remove="locale\**" />
   </ItemGroup>
 
-  <Target Name="ContentsBeforeBuild" AfterTargets="BeforeBuild" Condition="!$(IsCIBuild)">
+  <Target Name="GenerateTemplatePotFile" BeforeTargets="BeforeBuild" Condition="!$(IsCIBuild)">
+    <Exec Command="pot" />
     <ItemGroup>
       <Content Include="locale\nb-NO.po" Link="locale\nb-NO.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
       <Content Include="locale\messages.pot" Link="locale\en-US.po" CopyToPublishDirectory="PreserveNewest" Visible="false" />
     </ItemGroup>
-  </Target>
-
-  <Target Name="GenerateTemplatePotFile" BeforeTargets="BeforeBuild">
-    <Exec Command="pot" />
   </Target>
 
 </Project>
