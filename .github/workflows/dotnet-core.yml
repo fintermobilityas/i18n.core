@@ -64,9 +64,12 @@ jobs:
   publish:
      if: success()
      runs-on: ubuntu-latest
-     name: Publish nuget package
+     name: Publish nuget packages
      needs: [build]
      steps:
+      
+      - name: Checkout
+        uses: actions/checkout@v2
           
       - name: Download nupkgs
         uses: actions/download-artifact@v2
@@ -78,10 +81,8 @@ jobs:
         shell: pwsh
         run: | 
           $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
-                  
-          dotnet nuget push ".\${{ env.GITHUB_WORKSPACE }}\nupkgs"--source nuget.org --api-key ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}
-          echo "::set-env name=NUPKG_VERSION::$nupkg_version"
-
+          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Nupkg-Push -Version $nupkg_version -CI
+            
       - name: Create github release tag
         if: success() && github.ref == 'refs/heads/master'
         uses: actions/create-release@v1
