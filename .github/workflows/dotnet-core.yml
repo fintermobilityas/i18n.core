@@ -47,31 +47,13 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Version ${{ env.BUILD_VERSION }} -Nupkg -CI
+          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Build -Version ${{ env.BUILD_VERSION }} -Nupkg -CI
           echo "${{ env.BUILD_VERSION }}" | Out-File ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
 
-      - name: Install pot tool
-        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source ".\${{ env.GITHUB_WORKSPACE }}\nupkgs"
-
-      - name: Build locale
+      - name: Test pot tool
         shell: pwsh
-        run: |          
-          $pot_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\locale\messages.pot"
-          $web_config_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\Web.config"
-
-          pot --web-config-path $web_config_filename
-
-          $locale_exists = Test-Path $pot_filename -PathType Leaf
-          if($locale_exists -eq $false) {
-              exit 1
-          }
-
-          $pot_creation_date = Get-Content $pot_filename | Select-Object -First 4 | Where-Object { [string]::IsNullOrWhiteSpace($_) -eq $false } | Select-Object -Last 1
-          $is_valid_str = ($pot_creation_date -replace "`"", "").StartsWith("POT-Creation-Date");
-          if($is_valid_str -eq $false) {
-              exit 1
-          }
-          
+        run: pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Test-Pot -Version ${{ env.BUILD_VERSION }} -CI
+        
       - name: Upload nupkg
         if: success()
         uses: actions/upload-artifact@v2
