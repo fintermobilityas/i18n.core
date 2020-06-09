@@ -44,13 +44,34 @@ jobs:
           $BUILD_VERSION = (dotnet gitversion /showVariable NugetVersionv2) | out-string
           echo "::set-env name=BUILD_VERSION::$BUILD_VERSION"
                 
-      - name: Build & Run Tests
+      - name: Build
         shell: pwsh
-        timeout-minutes: 10
         run: |
           pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Version ${{ env.BUILD_VERSION }} -Nupkg
           echo "${{ env.BUILD_VERSION }}" | Out-File ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
 
+      - name: Install pot tool
+        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source .\nupkgs
+
+      - name: Build locale
+        shell: pwsh
+        run: |          
+          $pot_filename = ".\src\i18n.Demo\locale\messages.pot"
+          $web_config_filename = ".\src\i18n.Demo\Web.config"
+
+          pot --web-config-path $web_config_filename
+
+          $locale_exists = Test-Path $pot_filename -PathType Leaf
+          if($locale_exists -eq $false) {
+              exit 1
+          }
+
+          $pot_creation_date = Get-Content .\src\i18n.Demo\locale\messages.pot | Select-Object -First 4 | Where-Object { [string]::IsNullOrWhiteSpace($_) -eq $false } | Select-Object -Last 1
+          $is_valid_str = ($pot_creation_date -replace "`"", "").StartsWith("POT-Creation-Date");
+          if($is_valid_str -eq $false) {
+              exit 1
+          }
+          
       - name: Upload nupkg
         if: success()
         uses: actions/upload-artifact@v2
