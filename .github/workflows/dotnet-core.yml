@@ -28,7 +28,7 @@ jobs:
       - name: Read dotnet sdk version from global.json
         shell: pwsh
         run: |
-          $DOTNET_VERSION = Get-Content ".\$GITHUB_WORKSPACE\global.json" | ConvertFrom-Json | Select-Object -Expand sdk | Select-Object -Expand version    
+          $DOTNET_VERSION = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\global.json" | ConvertFrom-Json | Select-Object -Expand sdk | Select-Object -Expand version    
           echo "::set-env name=DOTNET_VERSION::$DOTNET_VERSION"
           
       - name: Setup dotnet v${{ env.DOTNET_VERSION }}
@@ -51,13 +51,13 @@ jobs:
           echo "${{ env.BUILD_VERSION }}" | Out-File ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
 
       - name: Install pot tool
-        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source .\nupkgs
+        run: dotnet tool update pot --global --version ${{ env.BUILD_VERSION }} --add-source ".\${{ env.GITHUB_WORKSPACE }}\nupkgs"
 
       - name: Build locale
         shell: pwsh
         run: |          
-          $pot_filename = ".\src\i18n.Demo\locale\messages.pot"
-          $web_config_filename = ".\src\i18n.Demo\Web.config"
+          $pot_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\locale\messages.pot"
+          $web_config_filename = ".\${{ env.GITHUB_WORKSPACE }}\src\i18n.Demo\Web.config"
 
           pot --web-config-path $web_config_filename
 
@@ -66,7 +66,7 @@ jobs:
               exit 1
           }
 
-          $pot_creation_date = Get-Content .\src\i18n.Demo\locale\messages.pot | Select-Object -First 4 | Where-Object { [string]::IsNullOrWhiteSpace($_) -eq $false } | Select-Object -Last 1
+          $pot_creation_date = Get-Content $pot_filename | Select-Object -First 4 | Where-Object { [string]::IsNullOrWhiteSpace($_) -eq $false } | Select-Object -Last 1
           $is_valid_str = ($pot_creation_date -replace "`"", "").StartsWith("POT-Creation-Date");
           if($is_valid_str -eq $false) {
               exit 1
