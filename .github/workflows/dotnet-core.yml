@@ -81,7 +81,7 @@ jobs:
         shell: pwsh
         run: | 
           $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
-          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Nupkg-Push -Version $nupkg_version -CI
+          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Nupkg-Push -Version $nupkg_version -CI -NupkgApiKey ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}
           echo "::set-env name=NUPKG_VERSION::$nupkg_version"
             
       - name: Create github release tag
