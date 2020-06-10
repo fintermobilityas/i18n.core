@@ -22,11 +22,11 @@
     <Copyright>Copyright © Finter Mobility As</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://opensource.org/licenses/BSD-3-Clause</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/fintermobilityas/i18n.core</PackageProjectUrl>
     <RepositoryUrl>https://github.com/fintermobilityas/i18n.core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <IsPackable>false</IsPackable>
+    <License type="expression">BSD-3-Clause</License>
     <NoPackageAnalysis>true</NoPackageAnalysis>
     <GeneratePackageOnBuild Condition="$(GeneratePackageOnBuild) == ''">false</GeneratePackageOnBuild>
     <PackageOutputPath>$(MSBuildThisFileDirectory)nupkgs</PackageOutputPath>
