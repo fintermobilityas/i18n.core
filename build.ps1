@@ -10,7 +10,9 @@ param(
     [Parameter(Position = 2, ValueFromPipeline)]
     [switch] $Nupkg,
     [Parameter(Position = 3, ValueFromPipeline)]
-    [switch] $CI
+    [switch] $CI,
+    [Parameter(Position = 4, ValueFromPipeline)]
+    [string]$NugetApiKey = $null
 )
 
 $WorkingDirectory = Split-Path -parent $MyInvocation.MyCommand.Definition
@@ -81,7 +83,7 @@ switch($Target) {
 
         foreach($NupkgPath in $Nupkgs) {
             Write-Output "Uploading $NupkgPath"
-            dotnet nuget push $NupkgPath --source nuget.org
+            dotnet nuget push $NupkgPath --source nuget.org --api-key $NugetApiKey
             Write-Output "Finished uploading $NupkgPath"
         }
 
