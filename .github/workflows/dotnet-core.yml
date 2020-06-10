@@ -80,10 +80,15 @@ jobs:
       - name: Push nuget packages 
         shell: pwsh
         run: | 
-          $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
-          pwsh -c ".\${{ env.GITHUB_WORKSPACE }}\build.ps1" -Target Nupkg-Push -Version $nupkg_version -CI -NugetApiKey ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}
-          echo "::set-env name=NUPKG_VERSION::$nupkg_version"
+          $nupkgs = Get-ChildItem ".\${{ env.GITHUB_WORKSPACE }}\nupkgs" -Filter *.nupkg | Select-Object -ExpandProperty FullName
+          
+          $nupkgs | ForEach-Object -Parallel {
+            dotnet nuget push $_ --source nuget.org --api-key ${{ secrets.PETERSUNDE_NUGET_ORG_API_KEY }}       
+          }
             
+          $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
+          echo "::set-env name=NUPKG_VERSION::$nupkg_version"
+          
       - name: Create github release tag
         if: success() && github.ref == 'refs/heads/master'
         uses: actions/create-release@v1
