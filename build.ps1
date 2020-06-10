@@ -81,7 +81,7 @@ switch($Target) {
 
         foreach($NupkgPath in $Nupkgs) {
             Write-Output "Uploading $NupkgPath"
-            #dotnet nuget push $NupkgPath
+            dotnet nuget push $NupkgPath --source nuget.org
             Write-Output "Finished uploading $NupkgPath"
         }
 
