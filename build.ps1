@@ -83,7 +83,7 @@ switch($Target) {
 
         foreach($NupkgPath in $Nupkgs) {
             Write-Output "Uploading $NupkgPath"
-            dotnet nuget push $NupkgPath --source nuget.org --api-key $NugetApiKey
+            Invoke-Command-Colored dotnet @("nuget push $NupkgPath --source nuget.org --api-key $NugetApiKey")
             Write-Output "Finished uploading $NupkgPath"
         }
 
