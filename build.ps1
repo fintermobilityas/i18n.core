@@ -1,6 +1,6 @@
 param(
     [Parameter(Position = 0, ValueFromPipeline)]
-    [ValidateSet("Build", "Test-Pot", "Nupkg-Push")]
+    [ValidateSet("Build", "Test-Pot")]
     [string] $Target = "Build",
     [Parameter(Position = 0, ValueFromPipeline)]
     [string] $Version = "0.0.0",
@@ -65,28 +65,5 @@ switch($Target) {
         Write-Output-Colored "Success"
         exit 0
           
-    }
-    "Nupkg-Push" {
-
-        $NupkgVersionStr = $Version + ".nupkg"
-
-        $Nupkgs = Get-ChildItem $NupkgsDirectory -Filter *.nupkg `
-            | Where-Object { $_.Name.EndsWith($NupkgVersionStr) } `
-            | Select-Object -ExpandProperty Fullname
-
-        if($Nupkgs.Length -eq 0) {
-            Write-Error "Unable to find any nupkgs in $NupkgsDirectory matching filter '*$NupkgVersionStr'"
-            exit 1
-        } 
-
-        Write-Output "Nupkgs found: $($Nupkgs.Length)"
-
-        foreach($NupkgPath in $Nupkgs) {
-            Write-Output "Uploading $NupkgPath"
-            Invoke-Command-Colored dotnet @("nuget push $NupkgPath --source nuget.org --api-key $NugetApiKey")
-            Write-Output "Finished uploading $NupkgPath"
-        }
-
-        exit 0
     }
 }
