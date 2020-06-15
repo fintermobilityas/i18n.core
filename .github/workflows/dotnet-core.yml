@@ -24,15 +24,9 @@ jobs:
 
       - name: Fetch all history for all tags and branches (gitversion requirement)
         run: git fetch --prune --unshallow
-                      
-      - name: Read dotnet sdk version from global.json
-        shell: pwsh
-        run: |
-          $DOTNET_VERSION = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\global.json" | ConvertFrom-Json | Select-Object -Expand sdk | Select-Object -Expand version    
-          echo "::set-env name=DOTNET_VERSION::$DOTNET_VERSION"
-          
+                  
       - name: Setup dotnet v${{ env.DOTNET_VERSION }}
-        uses: actions/setup-dotnet@v1.4.0
+        uses: actions/setup-dotnet@v1.5.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
