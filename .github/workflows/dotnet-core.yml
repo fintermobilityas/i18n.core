@@ -26,10 +26,6 @@ jobs:
         with:
           dotnet-version: '3.1.x'
 
-      - name: Remove global.json
-        shell: bash
-        run: rm global.json
-
       - id: set-version
         name: Setup GitVersion and set build version
         shell: pwsh
