@@ -26,9 +26,9 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool update GitVersion.Tool --global --version ${{ env.GITVERSION_VERSION }}
-          $SNAPX_VERSION = (dotnet gitversion /showVariable NugetVersionv2) | out-string
-          echo "::set-env name=I18N_CORE_VERSION::$I18N_CORE_VERSION"
-          echo "::set-output name=I18N_CORE_VERSION::$I18N_CORE_VERSION"
+          $BUILD_VERSION = (dotnet gitversion /showVariable NugetVersionv2) | out-string
+          echo "::set-env name=BUILD_VERSION::$BUILD_VERSION"
+          echo "::set-output name=BUILD_VERSION::$BUILD_VERSION"
 
   build:
     name: Build
