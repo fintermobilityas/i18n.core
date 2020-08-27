@@ -3,7 +3,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>pot</RootNamespace>
     <AssemblyName>pot</AssemblyName>
-    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
+    <TargetFrameworks>net5.0</TargetFrameworks>
     <IsPackable>true</IsPackable>
     <IsTestProject>false</IsTestProject>
     <PackAsTool>true</PackAsTool>
