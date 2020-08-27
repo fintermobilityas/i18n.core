@@ -4,15 +4,38 @@ on: push
 
 env:
   DOTNET_VERSION: 5.0.100-preview.8
-  GITVERSION_VERSION: 5.3.7
+  GITVERSION_VERSION: 5.3.4
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1 
 
 jobs:
+  
+  setup:    
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      BUILD_VERSION: ${{ steps.set-version.outputs.BUILD_VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.2.0
+        with:
+          fetch-depth: 0
+        
+      - id: set-version
+        name: Setup GitVersion and set build version
+        shell: pwsh
+        run: |
+          dotnet tool update GitVersion.Tool --global --version ${{ env.GITVERSION_VERSION }}
+          $BUILD_VERSION = (dotnet gitversion /showVariable NugetVersionv2) | out-string
+          echo "::set-env name=BUILD_VERSION::$BUILD_VERSION"
+          echo "::set-output name=BUILD_VERSION::$BUILD_VERSION"
 
   build:
     name: Build
     runs-on: ${{ matrix.os }}
+    needs: [setup]
+    env:
+      BUILD_VERSION: ${{ needs.setup.outputs.BUILD_VERSION }}
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
@@ -24,22 +47,11 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Fetch all history for all tags and branches (gitversion requirement)
-        run: git fetch --prune --unshallow
-                              
       - name: Setup dotnet v${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v1.5.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - id: set-version
-        name: Setup GitVersion v${{ env.GITVERSION_VERSION }} 
-        shell: pwsh
-        run: |
-          dotnet tool update GitVersion.Tool --global --version ${{ env.GITVERSION_VERSION }}
-          $BUILD_VERSION = (dotnet gitversion /showVariable NugetVersionv2) | out-string
-          echo "::set-env name=BUILD_VERSION::$BUILD_VERSION"
-                
+                      
       - name: Build
         shell: pwsh
         run: |
