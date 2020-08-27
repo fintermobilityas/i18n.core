@@ -25,7 +25,11 @@ jobs:
         uses: actions/setup-dotnet@v1.5.0
         with:
           dotnet-version: '3.1.x'
-          
+
+      - name: Remove global.json
+        shell: pwsh
+        run: Remove-Item global.json
+
       - id: set-version
         name: Setup GitVersion and set build version
         shell: pwsh
