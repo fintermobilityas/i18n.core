@@ -1,11 +1,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2020-04-27 01:03+02:00\n"
+"POT-Creation-Date: 2020-08-27 12:13+02:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: pot\n"
+"X-Generator: pot (1.0.14)\n"
 
 #: Views\Shared\Error.cshtml:7
 msgid "An error occurred while processing your request"

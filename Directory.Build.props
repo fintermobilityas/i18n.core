@@ -1,14 +1,14 @@
 <Project>
 
   <PropertyGroup>
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <OsPlatform Condition="$(OsPlatform) == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">Windows</OsPlatform>
     <OsPlatform Condition="$(OsPlatform) == '' AND '$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">Linux</OsPlatform>
     <OsPlatform Condition="$(OsPlatform) == ''">Unknown</OsPlatform>
-    <IsNetCoreApp Condition="$(TargetFramework.StartsWith('netcoreapp'))">true</IsNetCoreApp>
+    <IsNetCoreApp Condition="$(TargetFramework.StartsWith('netcoreapp')) OR $(TargetFramework) == 'net5.0'">true</IsNetCoreApp>
     <IsNetCoreApp Condition="'$(IsNetCoreApp)' == ''">false</IsNetCoreApp>
     <IsCIBuild Condition="$(IsCIBuild) == ''">false</IsCIBuild>
   </PropertyGroup>
