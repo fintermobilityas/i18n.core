@@ -93,7 +93,8 @@ namespace i18n.Core.Middleware
         public async Task InvokeAsync(HttpContext context)
         {
             var excludeUrls = _options.ExcludeUrls;
-            var modifyResponse = excludeUrls == null || !excludeUrls.Any(bl => context.Request.Path.Value.ToLower().Contains(bl));
+            var modifyResponse = excludeUrls == null || !excludeUrls.Any(bl => context.Request.Path.Value != null 
+                                                                   && context.Request.Path.Value.ToLowerInvariant().Contains(bl));
 
             if (!modifyResponse)
             {
