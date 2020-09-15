@@ -102,7 +102,11 @@ namespace i18n.Core.Middleware
                 return;
             }
 
-            context.Request.EnableBuffering();
+            // Increase buffer threshold in order to avoid flushing to disk.
+            // The threshold is less than default LOH object size.
+            const int bufferThreshold = 84000;
+            context.Request.EnableBuffering(bufferThreshold);
+
             var originBody = ReplaceBody(context.Response);
 
             try
