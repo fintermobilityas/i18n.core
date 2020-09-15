@@ -10,6 +10,7 @@ using i18n.Core.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IO;
@@ -102,22 +103,12 @@ namespace i18n.Core.Middleware
                 return;
             }
 
-            // Increase buffer threshold in order to avoid flushing to disk.
-            // The threshold is less than default LOH object size.
-            const int bufferThreshold = 84000;
-            context.Request.EnableBuffering(bufferThreshold);
+            // The original response body is cloned and replace by our own pooled memory stream.
+            // The pooled stream will be disposed when request has finished processing.
+            var originalResponseBodyStream = CloneResponseBodyStream(context);
 
-            var originBody = ReplaceBody(context.Response);
-
-            try
-            {
-                await _next(context);
-            }
-            catch
-            {
-                await ReturnBodyAsync(context.Response, originBody).ConfigureAwait(false);
-                throw;
-            }
+            // Execute next middleware in order to replace nuggets.
+            await _next(context);
 
             var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
             CultureInfo translationCultureInfo;
@@ -135,10 +126,11 @@ namespace i18n.Core.Middleware
             contentType = contentType?.Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
 
             var validContentTypes = _options.ValidContentTypes;
-            if (validContentTypes != null && validContentTypes.Contains(contentType))
+            if (validContentTypes != null 
+                && validContentTypes.Contains(contentType))
             {
                 string responseBody;
-                using (var streamReader = new StreamReader(context.Response.Body))
+                using (var streamReader = new StreamReader(context.Response.Body, Encoding.UTF8, false, leaveOpen: true))
                 {
                     context.Response.Body.Seek(0, SeekOrigin.Begin);
                     responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
@@ -154,27 +146,47 @@ namespace i18n.Core.Middleware
                 var requestContent = new StringContent(responseBody, Encoding.UTF8, contentType);
                 context.Response.Body = await requestContent.ReadAsStreamAsync().ConfigureAwait(false);
                 context.Response.ContentLength = context.Response.Body.Length;
+                context.Response.Body.Seek(0, SeekOrigin.Begin);
             }
 
-            await ReturnBodyAsync(context.Response, originBody).ConfigureAwait(false);
-        }
-        
-        Stream ReplaceBody(HttpResponse response)
-        {
-            var originBody = response.Body;
-            response.Body = _pooledStreamManager.GetStream(nameof(I18NMiddleware)) ?? 
-                            throw new Exception($"{nameof(_pooledStreamManager)} must return a valid stream.");
-            response.Body.Seek(0, SeekOrigin.Begin);
-            return originBody;
+            await context.Response.Body.CopyToAsync(originalResponseBodyStream).ConfigureAwait(false);
         }
 
-        async ValueTask ReturnBodyAsync(HttpResponse response, Stream originBody)
-        {
-            response.Body.Seek(0, SeekOrigin.Begin);
-            await response.Body.CopyToAsync(originBody).ConfigureAwait(false);
-            await _pooledStreamManager.ReturnStreamAsync(response.Body).ConfigureAwait(false);
-            response.Body = originBody;
+        Stream CloneResponseBodyStream(HttpContext httpContext)
+        {            
+            // Increase buffer threshold in order to avoid flushing to disk.
+            // The threshold is less than default LOH object size.
+            const int bufferThreshold = 84000;
+            httpContext.Request.EnableBuffering(bufferThreshold);
+
+            var responseBodyOriginalStream = httpContext.Response.Body;
+
+            var pooledResponseBodyStream = _pooledStreamManager.GetStream(nameof(I18NMiddleware)) ?? 
+                                           throw new Exception($"{nameof(_pooledStreamManager)} must return a valid stream.");
+
+            httpContext.Response.Body = pooledResponseBodyStream;
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+
+            httpContext.Response.RegisterForDispose(new DisposablePooledStream(_pooledStreamManager, pooledResponseBodyStream));
+
+            return responseBodyOriginalStream;
         }
-        
+
+        readonly struct DisposablePooledStream : IDisposable
+        {
+            readonly IPooledStreamManager _pooledStreamManager;
+            readonly Stream _stream;
+
+            public DisposablePooledStream(IPooledStreamManager pooledStreamManager, Stream stream)
+            {
+                _pooledStreamManager = pooledStreamManager;
+                _stream = stream;
+            }
+
+            public void Dispose()
+            {
+                _pooledStreamManager.ReturnStreamAsync(_stream);
+            }
+        }
     }
 }
