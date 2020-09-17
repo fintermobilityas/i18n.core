@@ -14,11 +14,11 @@ namespace i18n.Core
 
     public class DefaultNuggetReplacer : INuggetReplacer
     {
-        readonly Regex _nuggetRegex;
+        static readonly Regex NuggetRegex;
 
         // https://github.com/turquoiseowl/i18n/blob/ce7bdc9d8a8b92022c42417edeff4fb9ce8d3170/src/i18n.Domain/Helpers/NuggetParser.cs#L149
 
-        public DefaultNuggetReplacer()
+        static DefaultNuggetReplacer()
         {
             var nuggetTokens = new NuggetTokens("[[[", "]]]", "|||", "///");
 
@@ -29,7 +29,7 @@ namespace i18n.Core
 
             // Prep the regexes. We escape each token char to ensure it is not misinterpreted.
             // · Breakdown e.g. "\[\[\[(.+?)(?:\|\|\|(.+?))*(?:\/\/\/(.+?))?\]\]\]"
-            _nuggetRegex = new Regex(
+            NuggetRegex = new Regex(
                 string.Format(@"{0}(.+?)(?:{1}(.{4}?))*(?:{2}(.+?))?{3}",
                     EscapeString(nuggetTokens.BeginToken),
                     EscapeString(nuggetTokens.DelimiterToken),
@@ -60,7 +60,7 @@ namespace i18n.Core
                 return translationText ?? searchText;
             }
 
-            return _nuggetRegex.Replace(text, ReplaceNuggets);
+            return NuggetRegex.Replace(text, ReplaceNuggets);
         }
 
         static string EscapeString(string str, char escapeChar = '\\')
@@ -74,7 +74,7 @@ namespace i18n.Core
             return str1.ToString();
         }
 
-        sealed class NuggetTokens
+        readonly struct NuggetTokens
         {
             public string BeginToken { get; }
             public string EndToken { get; }
