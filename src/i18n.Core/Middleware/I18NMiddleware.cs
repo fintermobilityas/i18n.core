@@ -5,12 +5,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using i18n.Core.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -48,7 +50,6 @@ namespace i18n.Core.Middleware
         public ICollection<string> ExcludeUrls { get; }
         public bool CacheEnabled { get; [UsedImplicitly] set; }
         public Encoding RequestEncoding { get; [UsedImplicitly] set; }
-        public int RequestBufferingThreshold { get; [UsedImplicitly] set; }
 
         public I18NMiddlewareOptions()
         {
@@ -69,7 +70,6 @@ namespace i18n.Core.Middleware
             };
 
             RequestEncoding = Encoding.UTF8;
-            RequestBufferingThreshold = 84000; // Less than default GC LOH
         }
     }
 
@@ -82,7 +82,7 @@ namespace i18n.Core.Middleware
         readonly INuggetReplacer _nuggetReplacer;
         readonly I18NMiddlewareOptions _options;
 
-        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, IOptions<I18NMiddlewareOptions> middleWareOptions, 
+        public I18NMiddleware(RequestDelegate next, ILocalizationManager localizationManager, IOptions<I18NMiddlewareOptions> middleWareOptions,
             [CanBeNull] ILogger<I18NMiddleware> logger, IPooledStreamManager pooledStreamManager, INuggetReplacer nuggetReplacer)
         {
             _next = next;
@@ -100,8 +100,10 @@ namespace i18n.Core.Middleware
         [UsedImplicitly]
         public async Task InvokeAsync(HttpContext context, IWebHostEnvironment webHostEnvironment)
         {
+            var cancellationToken = context.RequestAborted;
+            var requestEncoding = _options.RequestEncoding ?? Encoding.UTF8;
             var excludeUrls = _options.ExcludeUrls;
-            var modifyResponse = excludeUrls == null || !excludeUrls.Any(bl => context.Request.Path.Value != null 
+            var modifyResponse = excludeUrls == null || !excludeUrls.Any(bl => context.Request.Path.Value != null
                                                                                && context.Request.Path.Value.ToLowerInvariant().Contains(bl));
             if (!modifyResponse)
             {
@@ -109,18 +111,22 @@ namespace i18n.Core.Middleware
                 return;
             }
 
-            context.Request.EnableBuffering(_options.RequestBufferingThreshold);
-            var originalResponseBodyStream = ReplaceHttpResponseBodyStream(context.Response);
+            var responseBodyPooledStream = new DisposablePooledStream(_pooledStreamManager, nameof(I18NMiddleware));
+            context.Response.RegisterForDisposeAsync(responseBodyPooledStream);
 
-            try
-            {
-                await _next(context);
-            }
-            catch
-            {
-                await ReturnHttpResponseBodyStreamAsync(context.Response, originalResponseBodyStream).ConfigureAwait(false);
-                throw;
-            }
+            var httpResponseBodyFeature = context.Features.Get<IHttpResponseBodyFeature>();
+            var httpResponseFeature = context.Features.Get<IHttpResponseFeature>();
+
+            var streamResponseBodyFeature = new StreamResponseBodyFeature(responseBodyPooledStream);
+            context.Features.Set<IHttpResponseBodyFeature>(streamResponseBodyFeature);
+
+            await _next(context).ConfigureAwait(false);
+
+            // Force dynamic content type in order reset Content-Length header.
+            httpResponseFeature.Headers.ContentLength = null;
+
+            var httpResponseBodyStream = (Stream) responseBodyPooledStream;
+            httpResponseBodyStream.Seek(0, SeekOrigin.Begin);
 
             var contentType = GetRequestContentType(context);
             var validContentTypes = _options.ValidContentTypes;
@@ -133,8 +139,8 @@ namespace i18n.Core.Middleware
                 _logger?.LogDebug(
                     $"Request path: {context.Request.Path}. Culture name: {cultureDictionary.CultureName}. Translations: {cultureDictionary.Translations.Count}.");
 
-                var responseBody = await ReadResponseBodyAsStringAsync(context);
-
+                var responseBody = await ReadResponseBodyAsStringAsync(httpResponseBodyStream, requestEncoding);
+                
                 string responseBodyTranslated;
                 if (webHostEnvironment.IsDevelopment())
                 {
@@ -145,20 +151,20 @@ namespace i18n.Core.Middleware
 
                     _logger?.LogDebug($"Replaced body in {sw.ElapsedMilliseconds} ms.");
                     const string i18NMiddlewareName = "X-" + nameof(I18NMiddleware) + "-Ms";
-                    context.Response.Headers[i18NMiddlewareName] = sw.ElapsedMilliseconds.ToString();
+                    httpResponseFeature.Headers[i18NMiddlewareName] = sw.ElapsedMilliseconds.ToString();
                 }
                 else
                 {
                     responseBodyTranslated = _nuggetReplacer.Replace(cultureDictionary, responseBody);
                 }
 
-                context.Response.Body = originalResponseBodyStream;
-                await context.Response.WriteAsync(responseBodyTranslated, _options.RequestEncoding ?? Encoding.UTF8);
+                var stringContent = new StringContent(responseBodyTranslated, requestEncoding, contentType);
+                await stringContent.CopyToAsync(httpResponseBodyFeature.Stream, cancellationToken);
 
                 return;
             }
 
-            await ReturnHttpResponseBodyStreamAsync(context.Response, originalResponseBodyStream).ConfigureAwait(false);
+            await httpResponseBodyStream.CopyToAsync(httpResponseBodyFeature.Stream, cancellationToken).ConfigureAwait(false);
         }
 
         [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier")]
@@ -186,47 +192,23 @@ namespace i18n.Core.Middleware
             return requestCultureInfo;
         }
 
-        static async Task<string> ReadResponseBodyAsStringAsync(HttpContext context)
+        static async Task<string> ReadResponseBodyAsStringAsync(Stream stream, Encoding encoding)
         {
-            context.Response.Body.Seek(0, SeekOrigin.Begin);
-
-            string responseBody;
-            using (var streamReader = new StreamReader(context.Response.Body, Encoding.UTF8, false, leaveOpen: true))
-            {
-                responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-            }
-
-            context.Response.Body.Seek(0, SeekOrigin.Begin);
-
-            return responseBody;
+            using var streamReader = new StreamReader(stream, encoding, false);
+            return await streamReader.ReadToEndAsync().ConfigureAwait(false);
         }
 
-        Stream ReplaceHttpResponseBodyStream(HttpResponse httpResponse)
-        {
-            var originBody = httpResponse.Body;
-            httpResponse.Body = _pooledStreamManager.GetStream(nameof(I18NMiddleware)) ?? 
-                            throw new Exception($"{nameof(_pooledStreamManager)} must return a valid stream.");
-            httpResponse.Body.Seek(0, SeekOrigin.Begin);
-            httpResponse.RegisterForDisposeAsync(new DisposablePooledStream(_pooledStreamManager, httpResponse.Body));
-            return originBody;
-        }
-
-        static async ValueTask ReturnHttpResponseBodyStreamAsync(HttpResponse httpResponse, Stream originalBodyResponseStream)
-        {
-            httpResponse.Body.Seek(0, SeekOrigin.Begin);
-            await httpResponse.Body.CopyToAsync(originalBodyResponseStream).ConfigureAwait(false);
-            httpResponse.Body = originalBodyResponseStream;
-        }
-        
         readonly struct DisposablePooledStream : IAsyncDisposable
         {
             readonly IPooledStreamManager _pooledStreamManager;
             readonly Stream _stream;
 
-            public DisposablePooledStream(IPooledStreamManager pooledStreamManager, Stream stream)
+            public static implicit operator Stream(DisposablePooledStream stream) => stream._stream;
+
+            public DisposablePooledStream(IPooledStreamManager pooledStreamManager, string streamName)
             {
                 _pooledStreamManager = pooledStreamManager;
-                _stream = stream;
+                _stream = _pooledStreamManager.GetStream(streamName);
             }
 
             public ValueTask DisposeAsync()
