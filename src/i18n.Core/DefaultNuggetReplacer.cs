@@ -45,15 +45,13 @@ namespace i18n.Core
 
             string ReplaceNuggets(Match match)
             {
-                // ReSharper disable once UnusedVariable
-                var textInclNugget = match.Value;
                 var textExclNugget = match.Groups[1].Value;
                 var searchText = textExclNugget;
 
-                if (textExclNugget.IndexOf("///", StringComparison.Ordinal) >= 0)
+                var textExclNuggetPosition = textExclNugget.IndexOf("///", StringComparison.Ordinal);
+                if (textExclNuggetPosition >= 0)
                 {
-                    // Remove comments
-                    searchText = textExclNugget.Substring(0, textExclNugget.IndexOf("///", StringComparison.Ordinal));
+                    searchText = textExclNugget.Substring(0, textExclNuggetPosition);
                 }
 
                 var translationText = cultureDictionary[searchText];

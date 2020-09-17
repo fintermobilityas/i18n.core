@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using i18n.Core.Abstractions;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IO;
@@ -27,13 +29,13 @@ namespace i18n.Core.Middleware
     {
         static readonly RecyclableMemoryStreamManager PooledStreamManager = new RecyclableMemoryStreamManager();
 
-        public Stream GetStream([NotNull] string name)
+        public Stream GetStream([JetBrains.Annotations.NotNull] string name)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             return PooledStreamManager.GetStream(name);
         }
 
-        public ValueTask ReturnStreamAsync([NotNull] Stream stream)
+        public ValueTask ReturnStreamAsync([JetBrains.Annotations.NotNull] Stream stream)
         {
             if (stream == null) throw new ArgumentNullException(nameof(stream));
             return stream.DisposeAsync();
@@ -45,6 +47,8 @@ namespace i18n.Core.Middleware
         public ICollection<string> ValidContentTypes { get; }
         public ICollection<string> ExcludeUrls { get; }
         public bool CacheEnabled { get; [UsedImplicitly] set; }
+        public Encoding RequestEncoding { get; [UsedImplicitly] set; }
+        public int RequestBufferingThreshold { get; [UsedImplicitly] set; }
 
         public I18NMiddlewareOptions()
         {
@@ -63,6 +67,9 @@ namespace i18n.Core.Middleware
                 "/fonts/",
                 "/images/"
             };
+
+            RequestEncoding = Encoding.UTF8;
+            RequestBufferingThreshold = 84000; // Less than default GC LOH
         }
     }
 
@@ -91,88 +98,127 @@ namespace i18n.Core.Middleware
         // https://github.com/turquoiseowl/i18n/issues/293#issuecomment-593399889
 
         [UsedImplicitly]
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, IWebHostEnvironment webHostEnvironment)
         {
             var excludeUrls = _options.ExcludeUrls;
             var modifyResponse = excludeUrls == null || !excludeUrls.Any(bl => context.Request.Path.Value != null 
-                                                                   && context.Request.Path.Value.ToLowerInvariant().Contains(bl));
-
+                                                                               && context.Request.Path.Value.ToLowerInvariant().Contains(bl));
             if (!modifyResponse)
             {
                 await _next(context);
                 return;
             }
 
-            // The original response body is cloned and replace by our own pooled memory stream.
-            // The pooled stream will be disposed when request has finished processing.
-            var originalResponseBodyStream = CloneResponseBodyStream(context);
+            context.Request.EnableBuffering(_options.RequestBufferingThreshold);
+            var originalResponseBodyStream = ReplaceHttpResponseBodyStream(context.Response);
 
-            // Execute next middleware in order to replace nuggets.
-            await _next(context);
-
-            var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
-            CultureInfo translationCultureInfo;
-            if (requestCultureFeature == null)
+            try
             {
-                _logger?.LogWarning($"{nameof(IRequestCultureFeature)} is not configured. Thread culture will be used instead.");
-                translationCultureInfo = CultureInfo.DefaultThreadCurrentCulture;
+                await _next(context);
             }
-            else
+            catch
             {
-                translationCultureInfo = requestCultureFeature.RequestCulture.Culture;
+                await ReturnHttpResponseBodyStreamAsync(context.Response, originalResponseBodyStream).ConfigureAwait(false);
+                throw;
             }
 
-            var contentType = context.Response.ContentType?.ToLower();
-            contentType = contentType?.Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-
+            var contentType = GetRequestContentType(context);
             var validContentTypes = _options.ValidContentTypes;
-            if (validContentTypes != null 
-                && validContentTypes.Contains(contentType))
+            var replaceNuggets = validContentTypes != null && validContentTypes.Contains(contentType);
+            if (replaceNuggets)
             {
-                string responseBody;
-                using (var streamReader = new StreamReader(context.Response.Body, Encoding.UTF8, false, leaveOpen: true))
-                {
-                    context.Response.Body.Seek(0, SeekOrigin.Begin);
-                    responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-                }
-
-                var cultureDictionary = _localizationManager.GetDictionary(translationCultureInfo, !_options.CacheEnabled);
+                var requestCultureInfo = GetRequestCultureInfo(context);
+                var cultureDictionary = _localizationManager.GetDictionary(requestCultureInfo, !_options.CacheEnabled);
 
                 _logger?.LogDebug(
                     $"Request path: {context.Request.Path}. Culture name: {cultureDictionary.CultureName}. Translations: {cultureDictionary.Translations.Count}.");
 
-                responseBody = _nuggetReplacer.Replace(cultureDictionary, responseBody);
+                var responseBody = await ReadResponseBodyAsStringAsync(context);
 
-                var requestContent = new StringContent(responseBody, Encoding.UTF8, contentType);
-                context.Response.Body = await requestContent.ReadAsStreamAsync().ConfigureAwait(false);
-                context.Response.ContentLength = context.Response.Body.Length;
-                context.Response.Body.Seek(0, SeekOrigin.Begin);
+                string responseBodyTranslated;
+                if (webHostEnvironment.IsDevelopment())
+                {
+                    var sw = new Stopwatch();
+                    sw.Restart();
+                    responseBodyTranslated = _nuggetReplacer.Replace(cultureDictionary, responseBody);
+                    sw.Stop();
+
+                    _logger?.LogDebug($"Replaced body in {sw.ElapsedMilliseconds} ms.");
+                    const string i18NMiddlewareName = "X-" + nameof(I18NMiddleware) + "-Ms";
+                    context.Response.Headers[i18NMiddlewareName] = sw.ElapsedMilliseconds.ToString();
+                }
+                else
+                {
+                    responseBodyTranslated = _nuggetReplacer.Replace(cultureDictionary, responseBody);
+                }
+
+                context.Response.Body = originalResponseBodyStream;
+                await context.Response.WriteAsync(responseBodyTranslated);
+
+                return;
             }
 
-            await context.Response.Body.CopyToAsync(originalResponseBodyStream).ConfigureAwait(false);
+            await ReturnHttpResponseBodyStreamAsync(context.Response, originalResponseBodyStream).ConfigureAwait(false);
         }
 
-        Stream CloneResponseBodyStream(HttpContext httpContext)
-        {            
-            // Increase buffer threshold in order to avoid flushing to disk.
-            // The threshold is less than default LOH object size.
-            const int bufferThreshold = 84000;
-            httpContext.Request.EnableBuffering(bufferThreshold);
-
-            var responseBodyOriginalStream = httpContext.Response.Body;
-
-            var pooledResponseBodyStream = _pooledStreamManager.GetStream(nameof(I18NMiddleware)) ?? 
-                                           throw new Exception($"{nameof(_pooledStreamManager)} must return a valid stream.");
-
-            httpContext.Response.Body = pooledResponseBodyStream;
-            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
-
-            httpContext.Response.RegisterForDispose(new DisposablePooledStream(_pooledStreamManager, pooledResponseBodyStream));
-
-            return responseBodyOriginalStream;
+        [SuppressMessage("ReSharper", "ConstantConditionalAccessQualifier")]
+        static string GetRequestContentType(HttpContext context)
+        {
+            return context.Response.ContentType?.ToLower()?.Split(';', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
         }
 
-        readonly struct DisposablePooledStream : IDisposable
+        CultureInfo GetRequestCultureInfo(HttpContext context)
+        {
+            var requestCultureFeature = context.Features.Get<IRequestCultureFeature>();
+
+            CultureInfo requestCultureInfo;
+            if (requestCultureFeature == null)
+            {
+                _logger?.LogWarning(
+                    $"{nameof(IRequestCultureFeature)} is not configured. {nameof(CultureInfo.DefaultThreadCurrentCulture)} will be used as fallback culture.");
+                requestCultureInfo = CultureInfo.DefaultThreadCurrentCulture;
+            }
+            else
+            {
+                requestCultureInfo = requestCultureFeature.RequestCulture.Culture;
+            }
+
+            return requestCultureInfo;
+        }
+
+        static async Task<string> ReadResponseBodyAsStringAsync(HttpContext context)
+        {
+            context.Response.Body.Seek(0, SeekOrigin.Begin);
+
+            string responseBody;
+            using (var streamReader = new StreamReader(context.Response.Body, Encoding.UTF8, false, leaveOpen: true))
+            {
+                responseBody = await streamReader.ReadToEndAsync().ConfigureAwait(false);
+            }
+
+            context.Response.Body.Seek(0, SeekOrigin.Begin);
+
+            return responseBody;
+        }
+
+        Stream ReplaceHttpResponseBodyStream(HttpResponse httpResponse)
+        {
+            var originBody = httpResponse.Body;
+            httpResponse.Body = _pooledStreamManager.GetStream(nameof(I18NMiddleware)) ?? 
+                            throw new Exception($"{nameof(_pooledStreamManager)} must return a valid stream.");
+            httpResponse.Body.Seek(0, SeekOrigin.Begin);
+            httpResponse.RegisterForDisposeAsync(new DisposablePooledStream(_pooledStreamManager, httpResponse.Body));
+            return originBody;
+        }
+
+        static async ValueTask ReturnHttpResponseBodyStreamAsync(HttpResponse httpResponse, Stream originalBodyResponseStream)
+        {
+            httpResponse.Body.Seek(0, SeekOrigin.Begin);
+            await httpResponse.Body.CopyToAsync(originalBodyResponseStream).ConfigureAwait(false);
+            httpResponse.Body = originalBodyResponseStream;
+        }
+        
+        readonly struct DisposablePooledStream : IAsyncDisposable
         {
             readonly IPooledStreamManager _pooledStreamManager;
             readonly Stream _stream;
@@ -183,9 +229,9 @@ namespace i18n.Core.Middleware
                 _stream = stream;
             }
 
-            public void Dispose()
+            public ValueTask DisposeAsync()
             {
-                _pooledStreamManager.ReturnStreamAsync(_stream);
+                return _pooledStreamManager.ReturnStreamAsync(_stream);
             }
         }
     }
