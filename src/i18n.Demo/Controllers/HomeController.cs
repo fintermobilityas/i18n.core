@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using i18n.Demo.Models;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace i18n.Demo.Controllers
 {
@@ -36,6 +37,11 @@ namespace i18n.Demo.Controllers
         {
             var pdfBytes = await System.IO.File.ReadAllBytesAsync(Path.Combine(_webHostEnvironment.WebRootPath, "assets", "sample.pdf"));
             return File(pdfBytes, "application/pdf", "sample.pdf");
+        }
+
+        public IActionResult Json()
+        {
+            return Json(new {Hello = "[[[Hello World]]]" });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
