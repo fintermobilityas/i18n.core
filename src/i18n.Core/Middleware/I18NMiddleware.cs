@@ -153,7 +153,7 @@ namespace i18n.Core.Middleware
                 }
 
                 context.Response.Body = originalResponseBodyStream;
-                await context.Response.WriteAsync(responseBodyTranslated);
+                await context.Response.WriteAsync(responseBodyTranslated, _options.RequestEncoding ?? Encoding.UTF8);
 
                 return;
             }
