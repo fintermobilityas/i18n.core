@@ -21,6 +21,12 @@
     <None Remove="locale\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\assets\sample.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <Target Name="GenerateTemplatePotFile" BeforeTargets="BeforeBuild" Condition="!$(IsCIBuild)">
     <Exec Command="pot" />
     <ItemGroup>
