@@ -100,7 +100,7 @@ jobs:
           }
             
           $nupkg_version = Get-Content ".\${{ env.GITHUB_WORKSPACE }}\nupkgs\nupkg_version.txt"
-          echo "::set-env name=NUPKG_VERSION::$nupkg_version"
+          echo "NUPKG_VERSION=$NUPKG_VERSION" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append 
           
       - name: Create github release tag
         if: success() && github.ref == 'refs/heads/master'
