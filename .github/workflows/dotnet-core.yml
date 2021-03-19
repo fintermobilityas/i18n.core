@@ -21,11 +21,10 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: Setup dotnet 3.1 sdk 
-        uses: actions/setup-dotnet@v1.7.2
-        with:
-          dotnet-version: '3.1.x'
-
+      - name: Add dotnet tools to environment path
+        shell: pwsh
+        run: echo "${HOME}/.dotnet/tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
       - id: set-version
         name: Setup GitVersion and set build version
         shell: pwsh
