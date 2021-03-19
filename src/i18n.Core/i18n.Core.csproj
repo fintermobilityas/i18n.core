@@ -16,7 +16,7 @@
     <PackageReference Include="JetBrains.Annotations" Version="2020.3.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.4.1" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
