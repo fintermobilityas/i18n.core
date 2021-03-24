@@ -52,7 +52,7 @@ namespace i18n.Core.Abstractions.Extensions
                 sb.Append("/");
             }
             sb.Append(folder);
-            if (!(url).IsSet() || url == "/")
+            if (url.IsSet() && url != "/")
             {
                 if (url[0] != '/')
                 {
