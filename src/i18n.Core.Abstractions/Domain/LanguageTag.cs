@@ -554,16 +554,19 @@ namespace i18n.Core.Abstractions.Domain
                 if (Uri.TryCreate(url, UriKind.Absolute, out uri))
                 {
                     var ub = new UriBuilder(url);
-                    var urlNew = ExtractLangTagFromUrl(ub.Path, UriKind.Relative, out urlPatched);
+                    var langtag = ExtractLangTagFromUrl(ub.Path, UriKind.Relative, out var strPatchedPath);
                     // Match?
-                    if (urlNew != null)
+                    if (langtag != null)
                     {
-                        ub.Path = urlNew;
-                        return ub.Uri.ToString(); // Go via Uri to avoid port 80 being added.
+                        ub.Path = strPatchedPath;
+                        urlPatched = ub.Uri.ToString(); // Go via Uri to avoid port 80 being added.
                     }
                     // No match.
-                    urlPatched = url;
-                    return null;
+                    else
+                    {
+                        urlPatched = url;
+                    }
+                    return langtag;
                 }
             }
 
