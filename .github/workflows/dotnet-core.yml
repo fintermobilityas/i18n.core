@@ -52,7 +52,7 @@ jobs:
           lfs: true
 
       - name: Setup dotnet v${{ env.DOTNET_VERSION }}
-        uses: actions/setup-dotnet@v1.7.2
+        uses: actions/setup-dotnet@v1.8.0
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
                       
